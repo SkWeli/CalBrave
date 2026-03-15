@@ -2,7 +2,8 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { db } from './firebase-admin.js'
-import verifyToken from './middleware/verifyToken.js'
+import userRoutes from './routes/userRoutes.js'
+import weightRoutes from './routes/weightRoutes.js' 
 
 dotenv.config() // Loads variables from .env into process.env
 
@@ -18,13 +19,9 @@ app.get('/', (req, res) => {
   res.json({ message: '🔥 CalBrave API is running!' })
 })
 
-// Protected route — only logged in users
-app.get('/api/protected', verifyToken, (req, res) => {
-  res.json({ 
-    message: `Hello ${req.user.email}, you are authenticated!`,
-    uid: req.user.uid
-  })
-})
+// Mount user routes at /api/users
+app.use('/api/users', userRoutes)
+app.use('/api/weight', weightRoutes)
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`)
