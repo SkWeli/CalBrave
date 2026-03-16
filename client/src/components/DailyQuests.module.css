@@ -1,0 +1,106 @@
+.container {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 16px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+
+.progress {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ff6b35;
+}
+
+/* Quest Items */
+.questList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.questItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f8f8f8;
+  transition: background 0.3s ease;
+}
+
+.completed {
+  background: #fff8f5;
+  border: 1px solid #ffe0d0;
+}
+
+.questLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.questEmoji {
+  font-size: 22px;
+}
+
+.questTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.questDesc {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.questRight {
+  flex-shrink: 0;
+}
+
+.tick {
+  font-size: 18px;
+}
+
+.bpBadge {
+  background: #fff3ee;
+  color: #ff6b35;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+
+/* Bonus Banner */
+.bonusBanner {
+  background: linear-gradient(135deg, #ff6b35, #ff9a6c);
+  color: white;
+  text-align: center;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Hint */
+.hint {
+  text-align: center;
+  font-size: 12px;
+  color: #aaa;
+}

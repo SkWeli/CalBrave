@@ -8,6 +8,8 @@ import WeightChart from '../components/WeightChart'
 import { getGamificationStatus } from '../services/api'
 import BlazeStatsCard from '../components/BlazeStatsCard'
 import WaterTracker from '../components/WaterTracker'
+import DailyQuests from '../components/DailyQuests'
+
 
 function DashboardPage() {
 
@@ -25,6 +27,7 @@ function DashboardPage() {
   const [message, setMessage]       = useState('')
   const [loading, setLoading]       = useState(true)
   const [blazeStatus, setBlazeStatus] = useState(null)
+  const [questRefresh, setQuestRefresh] = useState(0)
 
 
   // Helpers 
@@ -70,6 +73,7 @@ function DashboardPage() {
     try {
         const status = await getGamificationStatus()
         setBlazeStatus(status)
+        setQuestRefresh(prev => prev + 1)  // ← tells DailyQuests to reload
     } catch (err) {
         console.log('Blaze status error:', err.message)
     }
@@ -147,6 +151,9 @@ function DashboardPage() {
 
         {/* Blaze Stats */}
         <BlazeStatsCard status={blazeStatus} />
+
+        {/* Daily Quests */}
+        <DailyQuests refreshTrigger={questRefresh} />
 
         {/* Water Tracker */}
         <WaterTracker

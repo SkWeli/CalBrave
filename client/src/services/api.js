@@ -60,6 +60,14 @@ export const getBadges = async () => {
   return res.data
 }
 
+// Quests 
+
+export const getDailyQuests = async () => {
+  const res = await api.get('/gamification/quests')
+  return res.data
+}
+
+
 
 export default api
 

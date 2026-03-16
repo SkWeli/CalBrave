@@ -27,6 +27,33 @@ const MILESTONE_BP = {
   STREAK_30_DAYS:    1000,
 }
 
+const DAILY_QUESTS = [
+  {
+    id: 'log_weight',
+    title: 'Log Your Weight',
+    description: 'Record today\'s weight',
+    emoji: '⚖️',
+    bp: 20,
+    checkField: 'weightLogged'       // field in dailyLog to check
+  },
+  {
+    id: 'drink_water',
+    title: 'Drink 8 Glasses',
+    description: 'Stay hydrated all day',
+    emoji: '💧',
+    bp: 30,
+    checkField: 'waterGoalComplete'  // field in dailyLog to check
+  },
+  {
+    id: 'calorie_target',
+    title: 'Hit Calorie Target',
+    description: 'Stay within your calorie goal',
+    emoji: '🎯',
+    bp: 80,
+    checkField: 'calorieTargetHit'   // field in dailyLog to check
+  },
+]
+
 const LEVELS = [
   { level: 1,  bpNeeded: 0,     rank: '🌱 Beginner' },
   { level: 5,  bpNeeded: 1000,  rank: '🚶 Active Starter' },
@@ -89,6 +116,33 @@ async function awardBadge(uid, badgeKey, badgeName, badgeEmoji) {
 
   return { key: badgeKey, name: badgeName, emoji: badgeEmoji }
 }
+
+// Checks if all quests done → awards bonus automatically
+async function checkAndAwardQuestBonus(uid) {
+  const today = getTodayDate()
+
+  const dailyRef = db
+    .collection('users').doc(uid)
+    .collection('dailyLogs').doc(today)
+
+  const dailySnap = await dailyRef.get()
+  const dailyData = dailySnap.exists ? dailySnap.data() : {}
+
+  // Already awarded → skip
+  if (dailyData.allQuestsCompleted) return null
+
+  // Check if all quests are done
+  const allDone = DAILY_QUESTS.every(q => dailyData[q.checkField] === true)
+  if (!allDone) return null
+
+  // All done! Award bonus
+  await dailyRef.set({ allQuestsCompleted: true }, { merge: true })
+  await awardBP(uid, BP_ACTIONS.ALL_QUESTS_DONE, '🎉 All quests completed bonus!')
+  await awardBadge(uid, 'first_quest_sweep', 'Quest Blazer', '🎯')
+
+  return { bonusAwarded: true, bp: 100 }
+}
+
 
 // Routes 
 
@@ -189,11 +243,13 @@ router.post('/log-action', verifyToken, async (req, res) => {
 
     const result = await awardBP(uid, bpAmount, action)
     const streakResult = await updateStreak(uid, today)
+    const questBonus = await checkAndAwardQuestBonus(uid)
 
     res.json({
       ...result,
       newBadges,
-      streak: streakResult
+      streak: streakResult,
+      questBonus
     })
 
   } catch (error) {
@@ -230,6 +286,7 @@ router.post('/water', verifyToken, async (req, res) => {
     if (newGlasses === 8) {
       bonusResult = await awardBP(uid, BP_ACTIONS.WATER_GOAL_COMPLETE, '🔥 Water goal blazed!')
       await dailyRef.set({ waterGoalComplete: true }, { merge: true })
+      await checkAndAwardQuestBonus(uid)
     }
 
     res.json({
@@ -281,6 +338,85 @@ router.get('/daily', verifyToken, async (req, res) => {
     res.json({
       date: today,
       log: dailySnap.exists ? dailySnap.data() : null
+    })
+
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// GET /api/gamification/quests — get today's quests with completion status
+router.get('/quests', verifyToken, async (req, res) => {
+  try {
+    const uid = req.user.uid
+    const today = getTodayDate()
+
+    const dailySnap = await db
+      .collection('users').doc(uid)
+      .collection('dailyLogs').doc(today).get()
+
+    const dailyData = dailySnap.exists ? dailySnap.data() : {}
+
+    // Map quests and attach completion status from today's log
+    const quests = DAILY_QUESTS.map(quest => ({
+      ...quest,
+      completed: dailyData[quest.checkField] === true
+    }))
+
+    const allCompleted = quests.every(q => q.completed)
+    const completedCount = quests.filter(q => q.completed).length
+
+    res.json({
+      quests,
+      allCompleted,
+      completedCount,
+      totalQuests: DAILY_QUESTS.length,
+      bonusBP: 100,
+      bonusAwarded: dailyData.allQuestsCompleted || false
+    })
+
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+
+// POST /api/gamification/quests/complete-bonus
+// Called internally when all quests are done — awards the +100 BP bonus
+router.post('/quests/complete-bonus', verifyToken, async (req, res) => {
+  try {
+    const uid = req.user.uid
+    const today = getTodayDate()
+
+    const dailyRef = db
+      .collection('users').doc(uid)
+      .collection('dailyLogs').doc(today)
+
+    const dailySnap = await dailyRef.get()
+    const dailyData = dailySnap.exists ? dailySnap.data() : {}
+
+    // Don't award bonus twice
+    if (dailyData.allQuestsCompleted) {
+      return res.status(400).json({ error: 'Quest bonus already awarded today' })
+    }
+
+    // Check all quests are actually completed
+    const allDone = DAILY_QUESTS.every(q => dailyData[q.checkField] === true)
+    if (!allDone) {
+      return res.status(400).json({ error: 'Not all quests completed yet' })
+    }
+
+    // Award bonus
+    await dailyRef.set({ allQuestsCompleted: true }, { merge: true })
+    const result = await awardBP(uid, BP_ACTIONS.ALL_QUESTS_DONE, '🎉 All quests completed bonus!')
+
+    // Award badge
+    const badge = await awardBadge(uid, 'first_quest_sweep', 'Quest Blazer', '🎯')
+
+    res.json({
+      ...result,
+      message: '🎉 All quests blazed! +100 BP bonus!',
+      badge
     })
 
   } catch (error) {
