@@ -5,6 +5,8 @@ import { db } from './firebase-admin.js'
 import userRoutes from './routes/userRoutes.js'
 import weightRoutes from './routes/weightRoutes.js' 
 import gamificationRoutes from './routes/gamificationRoutes.js'
+import mealRoutes from './routes/mealRoutes.js'
+
 
 dotenv.config() // Loads variables from .env into process.env
 
@@ -24,6 +26,7 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes)
 app.use('/api/gamification', gamificationRoutes)
 app.use('/api/weight', weightRoutes)
+app.use('/api/meals', mealRoutes)
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`)

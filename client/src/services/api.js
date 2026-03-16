@@ -67,6 +67,28 @@ export const getDailyQuests = async () => {
   return res.data
 }
 
+// Meals 
+
+export const searchNutrition = async (query) => {
+  const res = await api.get(`/meals/search?q=${encodeURIComponent(query)}`)
+  return res.data
+}
+
+export const logMeal = async (name, calories, mealType, date) => {
+  const res = await api.post('/meals/log', { name, calories, mealType, date })
+  return res.data
+}
+
+export const getTodayMeals = async () => {
+  const res = await api.get('/meals/today')
+  return res.data
+}
+
+export const deleteMeal = async (date, mealId) => {
+  const res = await api.delete(`/meals/${date}/${mealId}`)
+  return res.data
+}
+
 
 
 export default api

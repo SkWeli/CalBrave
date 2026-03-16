@@ -9,6 +9,8 @@ import { getGamificationStatus } from '../services/api'
 import BlazeStatsCard from '../components/BlazeStatsCard'
 import WaterTracker from '../components/WaterTracker'
 import DailyQuests from '../components/DailyQuests'
+import CalorieTracker from '../components/CalorieTracker'
+import { getTodayMeals } from '../services/api'
 
 
 function DashboardPage() {
@@ -28,6 +30,7 @@ function DashboardPage() {
   const [loading, setLoading]       = useState(true)
   const [blazeStatus, setBlazeStatus] = useState(null)
   const [questRefresh, setQuestRefresh] = useState(0)
+  const [mealData, setMealData] = useState(null)
 
 
   // Helpers 
@@ -39,6 +42,7 @@ function DashboardPage() {
   useEffect(() => {
     loadDashboardData()
     loadBlazeStatus()
+    loadMealData()
   }, [])
 
   async function loadDashboardData() {
@@ -78,6 +82,22 @@ function DashboardPage() {
         console.log('Blaze status error:', err.message)
     }
     }
+    
+    // Meal Data
+    async function loadMealData() {
+    try {
+        const data = await getTodayMeals()
+        setMealData(data)
+    } catch (err) {
+        console.log('Meal data error:', err.message)
+    }
+    }
+
+    function refreshAll() {
+    loadBlazeStatus()
+    loadMealData()
+    }
+
 
   // Log weight 
   async function handleLogWeight(e) {
@@ -154,6 +174,12 @@ function DashboardPage() {
 
         {/* Daily Quests */}
         <DailyQuests refreshTrigger={questRefresh} />
+
+        {/* Calorie Tracker */}
+        <CalorieTracker
+        mealData={mealData}
+        onUpdate={refreshAll}
+        />
 
         {/* Water Tracker */}
         <WaterTracker

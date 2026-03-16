@@ -1,0 +1,300 @@
+.container {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 16px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+
+.remaining {
+  font-size: 13px;
+  font-weight: 600;
+  color: #22c55e;
+}
+
+.over {
+  color: #ef4444;
+}
+
+.progressSection {
+  margin-bottom: 14px;
+}
+
+.progressBar {
+  height: 10px;
+  background: #f0f0f0;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #86efac);
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+.overFill {
+  background: linear-gradient(90deg, #ef4444, #fca5a5);
+}
+
+.progressNumbers {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.eaten {
+  font-weight: 700;
+  color: #333;
+}
+
+.target {
+  color: #999;
+}
+
+.questComplete {
+  background: #fff8f5;
+  border: 1px solid #ffe0d0;
+  color: #ff6b35;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.mealList {
+  margin-bottom: 14px;
+}
+
+.mealGroup {
+  margin-bottom: 10px;
+}
+
+.mealGroupLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.mealItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8f8f8;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.mealName {
+  font-size: 14px;
+  color: #333;
+}
+
+.mealRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mealCal {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ff6b35;
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.deleteBtn:hover {
+  color: #ef4444;
+}
+
+.message {
+  font-size: 13px;
+  color: #ff6b35;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.select {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  font-size: 14px;
+  outline: none;
+  background: white;
+}
+
+.searchRow {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  font-size: 14px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #ff6b35;
+}
+
+.searchBtn {
+  padding: 10px 16px;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.searchBtn:disabled {
+  opacity: 0.5;
+}
+
+.results {
+  background: #f8f8f8;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resultsTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.resultItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.resultLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.resultName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  text-transform: capitalize;
+}
+
+.resultMacros {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.resultCal {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ff6b35;
+}
+
+.resultTotal {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  text-align: right;
+  padding-top: 4px;
+}
+
+.confirmBtn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #ff6b35, #ff9a6c);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.confirmBtn:disabled {
+  opacity: 0.6;
+}
+
+.cancelBtn {
+  padding: 12px 20px;
+  background: #f0f0f0;
+  color: #666;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.addBtn {
+  width: 100%;
+  padding: 12px;
+  background: #f8f8f8;
+  color: #333;
+  border: 2px dashed #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.addBtn:hover {
+  border-color: #ff6b35;
+  color: #ff6b35;
+  background: #fff8f5;
+}
