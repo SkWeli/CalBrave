@@ -5,7 +5,9 @@ import weightService from '../services/weightService'
 import userService from '../services/userService'
 import styles from './DashboardPage.module.css'
 import WeightChart from '../components/WeightChart'
-
+import { getGamificationStatus } from '../services/api'
+import BlazeStatsCard from '../components/BlazeStatsCard'
+import WaterTracker from '../components/WaterTracker'
 
 function DashboardPage() {
 
@@ -22,6 +24,8 @@ function DashboardPage() {
   const [saving, setSaving]         = useState(false)
   const [message, setMessage]       = useState('')
   const [loading, setLoading]       = useState(true)
+  const [blazeStatus, setBlazeStatus] = useState(null)
+
 
   // Helpers 
   function getTodayDate() {
@@ -31,6 +35,7 @@ function DashboardPage() {
   // Load data when page opens 
   useEffect(() => {
     loadDashboardData()
+    loadBlazeStatus()
   }, [])
 
   async function loadDashboardData() {
@@ -60,6 +65,16 @@ function DashboardPage() {
     }
   }
 
+  // Gamification
+  const loadBlazeStatus = async () => {
+    try {
+        const status = await getGamificationStatus()
+        setBlazeStatus(status)
+    } catch (err) {
+        console.log('Blaze status error:', err.message)
+    }
+    }
+
   // Log weight 
   async function handleLogWeight(e) {
     e.preventDefault()
@@ -71,6 +86,7 @@ function DashboardPage() {
       setMessage('✅ Weight logged successfully!')
       setWeight('')
       loadDashboardData() // refresh all data
+      loadBlazeStatus() 
     } catch (error) {
       setMessage('❌ ' + (error.response?.data?.error || 'Failed to save'))
     } finally {
@@ -128,6 +144,15 @@ function DashboardPage() {
             </p>
           </div>
         </div>
+
+        {/* Blaze Stats */}
+        <BlazeStatsCard status={blazeStatus} />
+
+        {/* Water Tracker */}
+        <WaterTracker
+        initialGlasses={blazeStatus?.today?.waterGlasses || 0}
+        onUpdate={loadBlazeStatus}
+        />
 
         {/* Weight Chart */}
         <WeightChart

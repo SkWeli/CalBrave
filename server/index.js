@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
 
 // Mount user routes at /api/users
 app.use('/api/users', userRoutes)
-aapp.use('/api/gamification', gamificationRoutes)
+app.use('/api/gamification', gamificationRoutes)
 app.use('/api/weight', weightRoutes)
 
 app.listen(PORT, () => {

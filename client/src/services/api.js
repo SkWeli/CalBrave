@@ -19,4 +19,48 @@ api.interceptors.request.use(async (config) => {
   return config
 })
 
+// Weight 
+
+export const logWeight = async (weight, date) => {
+  const res = await api.post('/weight/log', { weight, date })
+  return res.data
+}
+
+export const getWeightHistory = async () => {
+  const res = await api.get('/weight/history')
+  return res.data
+}
+
+// Profile 
+
+export const getProfile = async () => {
+  const res = await api.get('/users/profile')
+  return res.data
+}
+
+export const saveProfile = async (profileData) => {
+  const res = await api.post('/users/profile', profileData)
+  return res.data
+}
+
+// Gamification 
+
+export const getGamificationStatus = async () => {
+  const res = await api.get('/gamification/status')
+  return res.data
+}
+
+export const logWaterGlass = async () => {
+  const res = await api.post('/gamification/water')
+  return res.data
+}
+
+export const getBadges = async () => {
+  const res = await api.get('/gamification/badges')
+  return res.data
+}
+
+
 export default api
+
+
