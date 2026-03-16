@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import { db } from './firebase-admin.js'
 import userRoutes from './routes/userRoutes.js'
 import weightRoutes from './routes/weightRoutes.js' 
+import gamificationRoutes from './routes/gamificationRoutes.js'
 
 dotenv.config() // Loads variables from .env into process.env
 
@@ -21,6 +22,7 @@ app.get('/', (req, res) => {
 
 // Mount user routes at /api/users
 app.use('/api/users', userRoutes)
+aapp.use('/api/gamification', gamificationRoutes)
 app.use('/api/weight', weightRoutes)
 
 app.listen(PORT, () => {

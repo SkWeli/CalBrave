@@ -38,7 +38,30 @@ router.post('/log', verifyToken, async (req, res) => {
         loggedAt: new Date().toISOString()
       })
 
-    res.status(201).json({ message: `Weight ${weight}kg logged for ${date}` })
+      // Award BP for logging weight — only for today's date
+      let bpResult = null
+      const today = new Date().toISOString().split('T')[0]
+      if (date === today) {
+        try {
+          const response = await fetch(`http://localhost:5000/api/gamification/log-action`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': req.headers.authorization
+            },
+            body: JSON.stringify({ action: 'WEIGHT_LOGGED' })
+          })
+          bpResult = await response.json()
+        } catch (err) {
+          // BP award failed silently — weight still saved ✅
+          console.log('BP award failed:', err.message)
+        }
+      }
+
+    res.status(201).json({ 
+      message: `Weight ${weight}kg logged for ${date}`,
+      blazePoints: bpResult   
+    })
 
   } catch (error) {
     res.status(500).json({ error: error.message })
