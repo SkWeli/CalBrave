@@ -1,0 +1,150 @@
+.page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.logoutBtn {
+  padding: 8px 16px;
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #666;
+}
+
+.logoutBtn:hover {
+  background-color: #fee;
+  color: #c00;
+  border-color: #c00;
+}
+
+.main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.welcome {
+  font-size: 22px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.statsRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.card {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  text-align: center;
+}
+
+.cardLabel {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cardValue {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+}
+
+.section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.logForm {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.input {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #ff6b35;
+}
+
+.saveBtn {
+  padding: 10px 20px;
+  background-color: #ff6b35;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.saveBtn:hover  { background-color: #e55a25; }
+.saveBtn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+.message {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.historyItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.historyDate  { color: #666; font-size: 14px; }
+.historyWeight { font-weight: bold; color: #333; }
+
+.empty   { color: #999; font-size: 14px; }
+.loading { display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #666; }

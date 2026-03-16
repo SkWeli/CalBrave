@@ -1,24 +1,25 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import LoginPage from './pages/LoginPage' 
-import ProtectedRoute from './components/ProtectedRoute'   
+import LoginPage from './pages/LoginPage'
+import ProtectedRoute from './components/ProtectedRoute'
+import DashboardPage from './pages/DashboardPage'
+import SetupPage from './pages/SetupPage'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes — anyone can access */}
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
-
-        {/* Protected routes — must be logged in */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <div>Dashboard - Coming soon</div>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/setup" element={
+          <ProtectedRoute>
+            <SetupPage />
+          </ProtectedRoute>
+          } />
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        } />
       </Routes>
     </BrowserRouter>
   )
