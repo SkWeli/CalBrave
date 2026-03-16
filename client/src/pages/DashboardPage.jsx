@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import weightService from '../services/weightService'
 import userService from '../services/userService'
 import styles from './DashboardPage.module.css'
+import WeightChart from '../components/WeightChart'
+
 
 function DashboardPage() {
 
@@ -50,7 +52,7 @@ function DashboardPage() {
       setProfile(profileRes.data.profile)
       setLatestWeight(latestRes.data.latest)
       setHistory(historyRes.data.logs)
-      
+
     } catch (error) {
       console.error('Failed to load dashboard data:', error)
     } finally {
@@ -126,6 +128,12 @@ function DashboardPage() {
             </p>
           </div>
         </div>
+
+        {/* Weight Chart */}
+        <WeightChart
+        history={history}
+        goalWeight={profile?.goalWeight}
+        />
 
         {/* Log Weight Form */}
         <div className={styles.section}>
