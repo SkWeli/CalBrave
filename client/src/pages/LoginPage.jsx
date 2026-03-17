@@ -26,10 +26,11 @@ function LoginPage() {
     try {
       if (isSignup) {
         await signup(email, password)
+        navigate('/setup')        // ← new users go to setup first
       } else {
         await login(email, password)
+        navigate('/dashboard')    // ← existing users go to dashboard
       }
-      navigate('/dashboard')
     } catch (err) {
       setError(getErrorMessage(err.code))
     } finally {
