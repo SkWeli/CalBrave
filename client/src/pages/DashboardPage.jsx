@@ -63,9 +63,17 @@ function DashboardPage() {
     try {
       const res = await userService.getProfile()
       const profileData = res.data.profile
-      if (!profileData) { navigate('/setup'); return }
+      if (!profileData) {
+        navigate('/setup')
+        return
+      }
       setProfile(profileData)
     } catch (err) {
+      // 404 means new user with no profile yet — send to setup
+      if (err.response?.status === 404) {
+        navigate('/setup')
+        return
+      }
       console.error('fetchProfile error:', err)
     }
   }
