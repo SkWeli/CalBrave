@@ -1,0 +1,166 @@
+.container {
+  background: #1a1a1a;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0 0 4px 0;
+}
+
+/* Each food row */
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  position: relative;
+}
+
+.searchWrapper {
+  flex: 1;
+  position: relative;
+}
+
+.foodInput {
+  width: 100%;
+  padding: 10px 14px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #f1f5f9;
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.foodInput:focus {
+  border-color: #f97316;
+}
+
+/* Suggestions dropdown */
+.suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.suggestion {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: background 0.15s;
+}
+
+.suggestion:hover {
+  background: #333;
+}
+
+.foodName {
+  font-size: 0.9rem;
+  color: #f1f5f9;
+  font-weight: 500;
+}
+
+.foodMeta {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.searching {
+  font-size: 0.8rem;
+  color: #64748b;
+  padding: 4px 14px;
+  margin: 0;
+}
+
+/* Grams input */
+.gramsInput {
+  width: 80px;
+  padding: 10px 10px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #f1f5f9;
+  font-size: 0.9rem;
+  outline: none;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.gramsInput:focus {
+  border-color: #f97316;
+}
+
+/* Remove row button */
+.removeBtn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 10px 6px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.removeBtn:hover {
+  color: #ef4444;
+}
+
+/* Add another food button */
+.addBtn {
+  background: transparent;
+  border: 1px dashed #444;
+  border-radius: 10px;
+  color: #64748b;
+  padding: 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.addBtn:hover {
+  border-color: #f97316;
+  color: #f97316;
+}
+
+/* Log meal button */
+.logBtn {
+  background: #f97316;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  width: 100%;
+}
+
+.logBtn:hover {
+  background: #ea6c0a;
+}
+
+.logBtn:disabled {
+  background: #555;
+  cursor: not-allowed;
+}

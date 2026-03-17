@@ -5,20 +5,45 @@ import userService from '../services/userService'
 import weightService from '../services/weightService'
 import styles from './SetupPage.module.css'
 
+function calculateBMITargetWeight(heightCm, currentWeight) {
+  const heightM = heightCm / 100
+  const bmi = currentWeight / (heightM * heightM)
+
+  const minHealthy = 18.5 * (heightM * heightM)
+  const maxHealthy = 24.9 * (heightM * heightM)
+
+  let targetWeight
+  let bmiStatus
+
+  if (bmi < 18.5) {
+    bmiStatus = 'underweight'
+    targetWeight = Math.round(minHealthy * 10) / 10
+  } else if (bmi > 24.9) {
+    bmiStatus = 'overweight'
+    targetWeight = Math.round(maxHealthy * 10) / 10
+  } else {
+    bmiStatus = 'healthy'
+    targetWeight = Math.round(currentWeight * 10) / 10
+  }
+
+  return { bmi: Math.round(bmi * 10) / 10, bmiStatus, targetWeight }
+}
+
 function SetupPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
-  const [name, setName]             = useState('')
-  const [height, setHeight]         = useState('')
-  const [weight, setWeight]         = useState('')
-  const [goalWeight, setGoalWeight] = useState('')
+  const [name, setName]               = useState('')
+  const [height, setHeight]           = useState('')
+  const [weight, setWeight]           = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
-  const [saving, setSaving]         = useState(false)
-  const [error, setError]           = useState('')
+  const [saving, setSaving]           = useState(false)
+  const [error, setError]             = useState('')
+  const [gender, setGender]           = useState('male')
 
   function getTodayDate() {
-    return new Date().toISOString().split('T')[0]}
+    return new Date().toISOString().split('T')[0]
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -26,18 +51,26 @@ function SetupPage() {
     setError('')
 
     try {
-    // Save both at the same time
-    await Promise.all([
-      userService.saveProfile({
-        name,
-        height: parseFloat(height),
-        goalWeight: parseFloat(goalWeight),
-        dateOfBirth: dateOfBirth || null
-      }),
-      weightService.logWeight(parseFloat(weight), getTodayDate())
-    ])
+      // ✅ Calculate BMI inside handleSubmit using current state values
+      const { bmi, bmiStatus, targetWeight } = calculateBMITargetWeight(
+        parseFloat(height),
+        parseFloat(weight)
+      )
 
-    navigate('/dashboard')
+      await Promise.all([
+        userService.saveProfile({
+          name,
+          height: parseFloat(height),
+          gender,
+          goalWeight: targetWeight,   // ← auto calculated
+          bmi,
+          bmiStatus,
+          dateOfBirth: dateOfBirth || null
+        }),
+        weightService.logWeight(parseFloat(weight), getTodayDate())
+      ])
+
+      navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to save profile. Try again.')
     } finally {
@@ -99,20 +132,24 @@ function SetupPage() {
             />
           </div>
 
-
           <div className={styles.field}>
-            <label className={styles.label}>Goal Weight (kg)</label>
-            <input
-              type="number"
-              step="0.1"
-              placeholder="e.g. 74"
-              min="30"
-              max="300"
-              value={goalWeight}
-              onChange={(e) => setGoalWeight(e.target.value)}
-              className={styles.input}
-              required
-            />
+            <label className={styles.label}>Gender</label>
+            <div className={styles.genderToggle}>
+              <button
+                type="button"
+                className={`${styles.genderBtn} ${gender === 'male' ? styles.active : ''}`}
+                onClick={() => setGender('male')}
+              >
+                👨 Male
+              </button>
+              <button
+                type="button"
+                className={`${styles.genderBtn} ${gender === 'female' ? styles.active : ''}`}
+                onClick={() => setGender('female')}
+              >
+                👩 Female
+              </button>
+            </div>
           </div>
 
           <div className={styles.field}>

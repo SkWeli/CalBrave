@@ -38,7 +38,7 @@ const FOOD_ALIASES = {
 }
 
 function parseIngredient(text) {
-  const words = text.trim().toLowerCase().split(/\s+/)
+  const words = text.trim().toLowerCase().split(/\\s+/)
 
   let foodName = ''
   let quantity = 1
@@ -55,10 +55,8 @@ function parseIngredient(text) {
     const unitGrams = UNIT_TO_GRAMS[unitWord]
 
     if (unitGrams) {
-      // Has a unit → "3 cups" = 3 × 240 = 720g
       grams = quantity * unitGrams
     } else {
-      // No unit → "100" means 100g directly
       grams = quantity
     }
 
@@ -78,9 +76,8 @@ async function lookupCustomFood(foodName) {
   if (exactSnap.exists) return exactSnap.data()
 
   // Fetch all foods and do keyword search
-  // (only 324 records — fast enough)
   const allSnap = await db.collection('foods').get()
-  const searchWords = key.split(' ').filter(w => w.length > 2) // e.g. ["keeri", "samba"]
+  const searchWords = key.split(' ').filter(w => w.length > 2)
 
   let bestMatch = null
   let bestScore = 0
@@ -88,8 +85,6 @@ async function lookupCustomFood(foodName) {
   allSnap.forEach(doc => {
     const data = doc.data()
     const nameLower = data.name.toLowerCase()
-
-    // Count how many search words appear in the food name
     const score = searchWords.filter(word => nameLower.includes(word)).length
 
     if (score > bestScore) {
@@ -98,12 +93,10 @@ async function lookupCustomFood(foodName) {
     }
   })
 
-  // Only return if at least one word matched
   if (bestScore > 0) return bestMatch
 
   return null
 }
-
 
 // GET /api/meals/search
 router.get('/search', verifyToken, async (req, res) => {
@@ -135,7 +128,7 @@ router.get('/search', verifyToken, async (req, res) => {
           fat_g: Math.round(customFood.fat_g * scale * 10) / 10,
           note: `${grams}g (Sri Lanka Food Composition Table)`
         })
-        continue  // ← skip USDA entirely for this ingredient
+        continue
       }
 
       // ❌ Step 2: Not in custom table → fall back to USDA
@@ -211,15 +204,12 @@ router.get('/search', verifyToken, async (req, res) => {
     const totalCalories = results.reduce((sum, item) => sum + item.calories, 0)
 
     res.json({ results, totalCalories })
-
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
 })
 
-
-// POST /api/meals/log 
-
+// POST /api/meals/log
 router.post('/log', verifyToken, async (req, res) => {
   try {
     const uid = req.user.uid
@@ -285,15 +275,12 @@ router.post('/log', verifyToken, async (req, res) => {
       summary,
       blazePoints: bpResult
     })
-
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
 })
 
-
-// GET /api/meals/today 
-
+// GET /api/meals/today
 router.get('/today', verifyToken, async (req, res) => {
   try {
     const uid = req.user.uid
@@ -322,15 +309,12 @@ router.get('/today', verifyToken, async (req, res) => {
       deficit: Math.max(0, calorieTarget - totalCalories),
       surplus: Math.max(0, totalCalories - calorieTarget)
     })
-
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
 })
 
-
-// DELETE /api/meals/:date/:mealId 
-
+// DELETE /api/meals/:date/:mealId
 router.delete('/:date/:mealId', verifyToken, async (req, res) => {
   try {
     const uid = req.user.uid
@@ -345,17 +329,64 @@ router.delete('/:date/:mealId', verifyToken, async (req, res) => {
     const summary = await recalculateDailySummary(uid, date)
 
     res.json({ message: 'Meal deleted', summary })
-
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
 })
 
+// GET /api/meals/suggest?q=rice
+router.get('/suggest', verifyToken, async (req, res) => {
+  try {
+    const query = req.query.q?.toLowerCase().trim()
+    if (!query || query.length < 2) return res.json({ suggestions: [] })
 
-export default router
+    const allSnap = await db.collection('foods').get()
+    const searchWords = query.split(' ').filter(w => w.length > 1)
 
+    const scored = []
 
-// Helper 
+    allSnap.forEach(doc => {
+      const data = doc.data()
+      const nameLower = data.name.toLowerCase()
+
+      // Score: exact match > starts with > contains each word
+      let score = 0
+      if (nameLower === query) score += 100
+      if (nameLower.startsWith(query)) score += 50
+      searchWords.forEach(word => {
+        if (nameLower.includes(word)) score += 10
+      })
+
+      if (score > 0) scored.push({ ...data, score })
+    })
+
+    // Sort by score, return top 5
+    const top5 = scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map(({ score, ...food }) => food)  // remove score from response
+
+    // If nothing in custom DB, fall back to USDA suggestions
+    if (top5.length === 0) {
+      const searchRes = await fetch(
+        `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=5&dataType=SR%20Legacy,Foundation&api_key=${process.env.USDA_API_KEY}`
+      )
+      const data = await searchRes.json()
+      const usdaSuggestions = (data.foods || []).slice(0, 5).map(f => ({
+        name: f.description,
+        calories_per_100g: f.foodNutrients?.find(n => n.nutrientName?.includes('Energy'))?.value || 0,
+        category: 'USDA'
+      }))
+      return res.json({ suggestions: usdaSuggestions })
+    }
+
+    res.json({ suggestions: top5 })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Helper
 async function recalculateDailySummary(uid, date) {
   const [mealsSnap, userSnap] = await Promise.all([
     db.collection('users').doc(uid)
@@ -381,3 +412,5 @@ async function recalculateDailySummary(uid, date) {
     isDeficit
   }
 }
+
+export default router

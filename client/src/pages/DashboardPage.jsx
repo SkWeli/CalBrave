@@ -11,163 +11,190 @@ import WaterTracker from '../components/WaterTracker'
 import DailyQuests from '../components/DailyQuests'
 import CalorieTracker from '../components/CalorieTracker'
 import { getTodayMeals } from '../services/api'
+import BMIGauge from '../components/BMIGauge'
+import MealLogger from '../components/MealLogger'
+import LoadingScreen from '../components/LoadingScreen'
 
 
 function DashboardPage() {
 
-  // Auth 
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
-  // State 
-  const [profile, setProfile]       = useState(null)
+  const [profile, setProfile]           = useState(null)
   const [latestWeight, setLatestWeight] = useState(null)
-  const [history, setHistory]       = useState([])
-  const [weight, setWeight]         = useState('')
-  const [date, setDate]             = useState(getTodayDate())
-  const [saving, setSaving]         = useState(false)
-  const [message, setMessage]       = useState('')
-  const [loading, setLoading]       = useState(true)
-  const [blazeStatus, setBlazeStatus] = useState(null)
+  const [history, setHistory]           = useState([])
+  const [weight, setWeight]             = useState('')
+  const [date, setDate]                 = useState(getTodayDate())
+  const [saving, setSaving]             = useState(false)
+  const [message, setMessage]           = useState('')
+  const [loading, setLoading]           = useState(true)
+  const [blazeStatus, setBlazeStatus]   = useState(null)
   const [questRefresh, setQuestRefresh] = useState(0)
-  const [mealData, setMealData] = useState(null)
+  const [mealData, setMealData]         = useState(null)
 
 
-  // Helpers 
   function getTodayDate() {
-    return new Date().toISOString().split('T')[0] // "2026-03-16"
+    return new Date().toISOString().split('T')[0]
   }
 
-  // Load data when page opens 
+
   useEffect(() => {
-    loadDashboardData()
-    loadBlazeStatus()
-    loadMealData()
+    const loadData = async () => {
+      try {
+        await Promise.all([
+          fetchProfile(),
+          fetchLatestWeight(),
+          fetchWeightHistory(),
+          fetchBlazeStatus(),
+          fetchTodayMeals(),
+        ])
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
   }, [])
 
-  async function loadDashboardData() {
+
+  async function fetchProfile() {
     try {
-      const [profileRes, latestRes, historyRes] = await Promise.all([
-        userService.getProfile().catch(() => ({ data: { profile: null } })),
-        weightService.getLatest().catch(() => ({ data: { latest: null } })),
-        weightService.getHistory()
-      ])
-
-      const profileData = profileRes.data.profile
-
-    // New user — no profile yet → send to setup
-      if (!profileData) {
-      navigate('/setup')
-      return
-    }
-
-      setProfile(profileRes.data.profile)
-      setLatestWeight(latestRes.data.latest)
-      setHistory(historyRes.data.logs)
-
-    } catch (error) {
-      console.error('Failed to load dashboard data:', error)
-    } finally {
-      setLoading(false)
+      const res = await userService.getProfile()
+      const profileData = res.data.profile
+      if (!profileData) { navigate('/setup'); return }
+      setProfile(profileData)
+    } catch (err) {
+      console.error('fetchProfile error:', err)
     }
   }
 
-  // Gamification
-  const loadBlazeStatus = async () => {
+  async function fetchLatestWeight() {
     try {
-        const status = await getGamificationStatus()
-        setBlazeStatus(status)
-        setQuestRefresh(prev => prev + 1)  // ← tells DailyQuests to reload
+      const res = await weightService.getLatest()
+      setLatestWeight(res.data.latest)
     } catch (err) {
-        console.log('Blaze status error:', err.message)
+      console.error('fetchLatestWeight error:', err)
     }
-    }
-    
-    // Meal Data
-    async function loadMealData() {
+  }
+
+  async function fetchWeightHistory() {
     try {
-        const data = await getTodayMeals()
-        setMealData(data)
+      const res = await weightService.getHistory()
+      setHistory(res.data.logs || [])
     } catch (err) {
-        console.log('Meal data error:', err.message)
+      console.error('fetchWeightHistory error:', err)
     }
+  }
+
+  async function fetchBlazeStatus() {
+    try {
+      const status = await getGamificationStatus()
+      setBlazeStatus(status)
+      setQuestRefresh(prev => prev + 1)
+    } catch (err) {
+      console.log('Blaze status error:', err.message)
     }
+  }
 
-    function refreshAll() {
-    loadBlazeStatus()
-    loadMealData()
+  async function fetchTodayMeals() {
+    try {
+      const data = await getTodayMeals()
+      setMealData(data)
+    } catch (err) {
+      console.log('Meal data error:', err.message)
     }
+  }
 
+  function refreshAll() {
+    fetchBlazeStatus()
+    fetchTodayMeals()
+  }
 
-  // Log weight 
   async function handleLogWeight(e) {
     e.preventDefault()
     setSaving(true)
     setMessage('')
-
     try {
       await weightService.logWeight(parseFloat(weight), date)
-      setMessage('✅ Weight logged successfully!')
+      setMessage('Weight logged successfully.')
       setWeight('')
-      loadDashboardData() // refresh all data
-      loadBlazeStatus() 
+      fetchLatestWeight()
+      fetchWeightHistory()
+      fetchBlazeStatus()
     } catch (error) {
-      setMessage('❌ ' + (error.response?.data?.error || 'Failed to save'))
+      setMessage(error.response?.data?.error || 'Failed to save. Please try again.')
     } finally {
       setSaving(false)
     }
   }
 
-  // Logout 
   async function handleLogout() {
     await logout()
     navigate('/login')
   }
 
-  // Render 
-  if (loading) {
-    return <div className={styles.loading}>Loading your dashboard...</div>
-  }
+
+  if (loading) return <LoadingScreen />
+
 
   return (
     <div className={styles.page}>
 
-      {/* Header */}
       <header className={styles.header}>
-        <h1 className={styles.logo}>🔥 CalBrave</h1>
-        <button onClick={handleLogout} className={styles.logoutBtn}>Logout</button>
+        <h1 className={styles.logo}>CalBrave</h1>
+        <button onClick={handleLogout} className={styles.logoutBtn}>Sign out</button>
       </header>
 
       <main className={styles.main}>
 
-        {/* Welcome */}
-        <h2 className={styles.welcome}>
-          Welcome back, {profile?.name || user.email}! 👋
-        </h2>
+        <div className={styles.welcomeRow}>
+          <div>
+            <p className={styles.welcomeLabel}>Good day</p>
+            <h2 className={styles.welcome}>
+              {profile?.name || user.email}
+            </h2>
+          </div>
+          <p className={styles.welcomeDate}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
 
         {/* Stats Cards */}
         <div className={styles.statsRow}>
           <div className={styles.card}>
             <p className={styles.cardLabel}>Current Weight</p>
             <p className={styles.cardValue}>
-              {latestWeight ? `${latestWeight.weight} kg` : 'Not logged yet'}
+              {latestWeight ? `${latestWeight.weight}` : '—'}
             </p>
+            {latestWeight && <p className={styles.cardUnit}>kg</p>}
           </div>
           <div className={styles.card}>
             <p className={styles.cardLabel}>Goal Weight</p>
             <p className={styles.cardValue}>
-              {profile?.goalWeight ? `${profile.goalWeight} kg` : 'Not set'}
+              {profile?.goalWeight ? `${profile.goalWeight}` : '—'}
             </p>
+            {profile?.goalWeight && <p className={styles.cardUnit}>kg</p>}
           </div>
           <div className={styles.card}>
-            <p className={styles.cardLabel}>To Go</p>
+            <p className={styles.cardLabel}>Remaining</p>
             <p className={styles.cardValue}>
               {latestWeight && profile?.goalWeight
-                ? `${(latestWeight.weight - profile.goalWeight).toFixed(1)} kg`
+                ? `${Math.abs(latestWeight.weight - profile.goalWeight).toFixed(1)}`
                 : '—'}
             </p>
+            {latestWeight && profile?.goalWeight && <p className={styles.cardUnit}>kg to go</p>}
           </div>
         </div>
+
+        {/* BMI Gauge */}
+        {profile?.bmi && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>BMI Overview</h3>
+            <BMIGauge bmi={profile.bmi} />
+          </div>
+        )}
 
         {/* Blaze Stats */}
         <BlazeStatsCard status={blazeStatus} />
@@ -176,26 +203,28 @@ function DashboardPage() {
         <DailyQuests refreshTrigger={questRefresh} />
 
         {/* Calorie Tracker */}
-        <CalorieTracker
-        mealData={mealData}
-        onUpdate={refreshAll}
-        />
+        <CalorieTracker mealData={mealData} onUpdate={refreshAll} />
+
+        {/* Meal Logger */}
+        <div className={styles.section}>
+          <MealLogger onMealLogged={() => {
+            fetchTodayMeals()
+            fetchBlazeStatus()
+          }} />
+        </div>
 
         {/* Water Tracker */}
         <WaterTracker
-        initialGlasses={blazeStatus?.today?.waterGlasses || 0}
-        onUpdate={loadBlazeStatus}
+          initialGlasses={blazeStatus?.today?.waterGlasses || 0}
+          onUpdate={fetchBlazeStatus}
         />
 
         {/* Weight Chart */}
-        <WeightChart
-        history={history}
-        goalWeight={profile?.goalWeight}
-        />
+        <WeightChart history={history} goalWeight={profile?.goalWeight} />
 
-        {/* Log Weight Form */}
+        {/* Log Weight */}
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Log Today's Weight</h3>
+          <h3 className={styles.sectionTitle}>Log Weight</h3>
           <form onSubmit={handleLogWeight} className={styles.logForm}>
             <input
               type="number"
@@ -216,17 +245,21 @@ function DashboardPage() {
               required
             />
             <button type="submit" disabled={saving} className={styles.saveBtn}>
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? 'Saving…' : 'Save Entry'}
             </button>
           </form>
-          {message && <p className={styles.message}>{message}</p>}
+          {message && (
+            <p className={`${styles.message} ${message.includes('successfully') ? styles.messageSuccess : styles.messageError}`}>
+              {message}
+            </p>
+          )}
         </div>
 
         {/* Weight History */}
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>Weight History</h3>
           {history.length === 0 ? (
-            <p className={styles.empty}>No entries yet. Log your first weight above!</p>
+            <p className={styles.empty}>No entries yet. Log your first weight above.</p>
           ) : (
             <div className={styles.historyList}>
               {[...history].reverse().map((entry) => (
@@ -243,5 +276,6 @@ function DashboardPage() {
     </div>
   )
 }
+
 
 export default DashboardPage
