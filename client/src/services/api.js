@@ -3,7 +3,7 @@ import { auth } from '../firebase.js'
 
 // Base axios instance - all requests go to this URL
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api'
+  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`
 })
 
 // Interceptor - runs before EVERY request automatically
