@@ -97,17 +97,23 @@ function MealLogger({ onMealLogged }) {
   }
 
   const handleLog = async () => {
-    const valid = rows.filter(r => r.foodName && r.grams)
-    if (valid.length === 0) return
+  const valid = rows.filter(r => r.foodName && r.grams)
+  if (valid.length === 0) return
 
-    setLogging(true)
+  setLogging(true)
     try {
-      // Build query string like "rice 200, chicken 150"
+      // Step 1: build query string and hit /search to get name + calories
       const query = valid
         .map(r => `${r.foodName} ${r.grams}g`)
         .join(', ')
 
-      await api.post('/meals/log', { query, mealType })
+      const searchRes = await api.get(`/meals/search?q=${encodeURIComponent(query)}`)
+      const { results, totalCalories } = searchRes.data
+
+      // Step 2: send resolved name + calories to /log as the backend expects
+      const name = results.map(r => r.name).join(', ')
+      await api.post('/meals/log', { name, calories: totalCalories, mealType })
+
       onMealLogged?.()
       setRows([{ foodName: '', grams: '', foodData: null }])
     } catch (err) {
