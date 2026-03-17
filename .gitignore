@@ -89,3 +89,7 @@ coverage/
 .cache/
 tmp/
 temp/
+
+# Firebase secret key 
+seed/serviceAccountKey.json
+serviceAccountKey.json

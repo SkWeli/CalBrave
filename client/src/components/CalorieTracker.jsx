@@ -182,6 +182,7 @@ function CalorieTracker({ mealData, onUpdate }) {
                     <span className={styles.resultMacros}>
                       P: {item.protein_g}g · C: {item.carbs_g}g · F: {item.fat_g}g
                     </span>
+                    <span className={styles.resultNote}>{item.note}</span>
                   </div>
                   <span className={styles.resultCal}>{item.calories} cal</span>
                 </div>

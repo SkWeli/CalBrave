@@ -8,6 +8,103 @@ function getTodayDate() {
   return new Date().toISOString().split('T')[0]
 }
 
+const UNIT_TO_GRAMS = {
+  cup: 240, cups: 240,
+  tbsp: 15, tablespoon: 15, tablespoons: 15,
+  tsp: 5, teaspoon: 5, teaspoons: 5,
+  piece: 100, pieces: 100,
+  slice: 30, slices: 30,
+  bowl: 300, bowls: 300,
+  plate: 400, plates: 400,
+  handful: 30, handfuls: 30,
+  g: 1, gram: 1, grams: 1,
+  kg: 1000,
+  ml: 1, oz: 28,
+}
+
+const FOOD_ALIASES = {
+  'dahl': 'lentils cooked',
+  'dal':  'lentils cooked',
+  'dhal': 'lentils cooked',
+  'pol sambol': 'coconut fresh',
+  'roti': 'flatbread',
+  'chapati': 'flatbread',
+  'brinjal': 'eggplant',
+  'lady fingers': 'okra',
+  'ladies fingers': 'okra',
+  'bitter gourd': 'bitter melon',
+  'mango': 'mango raw',
+  'papaya': 'papaya raw',
+}
+
+function parseIngredient(text) {
+  const words = text.trim().toLowerCase().split(/\s+/)
+
+  let foodName = ''
+  let quantity = 1
+  let grams = 100
+
+  const numberIndex = words.findIndex(w => !isNaN(parseFloat(w)))
+
+  if (numberIndex === -1) {
+    foodName = words.join(' ')
+    grams = 100
+  } else {
+    quantity = parseFloat(words[numberIndex])
+    const unitWord = words[numberIndex + 1] || ''
+    const unitGrams = UNIT_TO_GRAMS[unitWord]
+
+    if (unitGrams) {
+      // Has a unit → "3 cups" = 3 × 240 = 720g
+      grams = quantity * unitGrams
+    } else {
+      // No unit → "100" means 100g directly
+      grams = quantity
+    }
+
+    const nonFoodIndexes = new Set([numberIndex, numberIndex + 1])
+    foodName = words.filter((_, i) => !nonFoodIndexes.has(i)).join(' ')
+  }
+
+  return { foodName: foodName.trim() || words[0], grams: Math.round(grams) }
+}
+
+// ✅ Check Firestore custom Sri Lankan food table first
+async function lookupCustomFood(foodName) {
+  const key = foodName.toLowerCase().trim()
+
+  // Try exact document ID match first
+  const exactSnap = await db.collection('foods').doc(key).get()
+  if (exactSnap.exists) return exactSnap.data()
+
+  // Fetch all foods and do keyword search
+  // (only 324 records — fast enough)
+  const allSnap = await db.collection('foods').get()
+  const searchWords = key.split(' ').filter(w => w.length > 2) // e.g. ["keeri", "samba"]
+
+  let bestMatch = null
+  let bestScore = 0
+
+  allSnap.forEach(doc => {
+    const data = doc.data()
+    const nameLower = data.name.toLowerCase()
+
+    // Count how many search words appear in the food name
+    const score = searchWords.filter(word => nameLower.includes(word)).length
+
+    if (score > bestScore) {
+      bestScore = score
+      bestMatch = data
+    }
+  })
+
+  // Only return if at least one word matched
+  if (bestScore > 0) return bestMatch
+
+  return null
+}
+
+
 // GET /api/meals/search
 router.get('/search', verifyToken, async (req, res) => {
   try {
@@ -17,33 +114,99 @@ router.get('/search', verifyToken, async (req, res) => {
       return res.status(400).json({ error: 'Please enter a food description' })
     }
 
-    const response = await fetch(
-      `https://api.api-ninjas.com/v1/nutrition?query=${encodeURIComponent(query)}`,
-      {
-        headers: { 'X-Api-Key': process.env.CALORIE_NINJAS_API_KEY }
+    const ingredients = query.split(',').map(s => s.trim()).filter(Boolean)
+    const results = []
+
+    for (const ingredient of ingredients) {
+      const { foodName, grams } = parseIngredient(ingredient)
+
+      // ✅ Step 1: Check Sri Lankan Firestore table first
+      const customFood = await lookupCustomFood(foodName)
+
+      if (customFood) {
+        const scale = grams / 100
+        results.push({
+          name: customFood.name,
+          originalText: ingredient,
+          grams,
+          calories: Math.round(customFood.calories_per_100g * scale),
+          protein_g: Math.round(customFood.protein_g * scale * 10) / 10,
+          carbs_g: Math.round(customFood.carbs_g * scale * 10) / 10,
+          fat_g: Math.round(customFood.fat_g * scale * 10) / 10,
+          note: `${grams}g (Sri Lanka Food Composition Table)`
+        })
+        continue  // ← skip USDA entirely for this ingredient
       }
-    )
 
-    if (!response.ok) {
-      return res.status(500).json({ error: 'Nutrition API failed' })
+      // ❌ Step 2: Not in custom table → fall back to USDA
+      const searchName = FOOD_ALIASES[foodName.toLowerCase()] || foodName
+      const searchRes = await fetch(
+        `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(searchName)}&pageSize=5&dataType=SR%20Legacy,Foundation&api_key=${process.env.USDA_API_KEY}`
+      )
+
+      if (!searchRes.ok) continue
+
+      const searchData = await searchRes.json()
+
+      if (!searchData.foods || searchData.foods.length === 0) {
+        results.push({
+          name: foodName,
+          originalText: ingredient,
+          grams,
+          calories: 0,
+          protein_g: 0,
+          carbs_g: 0,
+          fat_g: 0,
+          note: 'Not found in database'
+        })
+        continue
+      }
+
+      const food = searchData.foods.reduce((best, current) => {
+        const bestScore = best.description.toLowerCase().split(',').length
+        const currentScore = current.description.toLowerCase().split(',').length
+        const bestHasName = best.description.toLowerCase().includes(foodName.toLowerCase())
+        const currentHasName = current.description.toLowerCase().includes(foodName.toLowerCase())
+
+        if (currentHasName && !bestHasName) return current
+        if (!currentHasName && bestHasName) return best
+        return currentScore < bestScore ? current : best
+      }, searchData.foods[0])
+
+      const nutrients = food.foodNutrients || []
+
+      const findNutrient = (...names) => {
+        for (const name of names) {
+          const n = nutrients.find(n =>
+            n.nutrientName?.toLowerCase().includes(name.toLowerCase())
+          )
+          if (n && n.value) return n.value
+        }
+        return 0
+      }
+
+      const calPer100g     = findNutrient('Energy')
+      const proteinPer100g = findNutrient('Protein')
+      const carbsPer100g   = findNutrient('Carbohydrate, by difference', 'Carbohydrate')
+      const fatPer100g     = findNutrient('Total lipid', 'Fat')
+
+      const scale = grams / 100
+
+      results.push({
+        name: foodName,
+        originalText: ingredient,
+        grams,
+        calories: Math.round(calPer100g * scale),
+        protein_g: Math.round(proteinPer100g * scale * 10) / 10,
+        carbs_g: Math.round(carbsPer100g * scale * 10) / 10,
+        fat_g: Math.round(fatPer100g * scale * 10) / 10,
+        note: `${grams}g (${food.description})`
+      })
     }
 
-    const items = await response.json()
-
-    if (!items || items.length === 0) {
-      return res.status(404).json({ error: 'No nutrition data found. Try being more specific.' })
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'No foods found. Try simpler names like "rice", "chicken".' })
     }
-
-    console.log('CalorieNinjas raw response:', JSON.stringify(items[0], null, 2))
-
-    const results = items.map(item => ({
-      name: item.name,
-      calories: Math.round(item.calories),
-      protein_g: Math.round(item.protein_g * 10) / 10,
-      carbs_g: Math.round(item.carbohydrates_total_g * 10) / 10,
-      fat_g: Math.round(item.fat_total_g * 10) / 10,
-      serving_size_g: Math.round(item.serving_size_g)
-    }))
 
     const totalCalories = results.reduce((sum, item) => sum + item.calories, 0)
 
