@@ -97,21 +97,32 @@ function MealLogger({ onMealLogged }) {
   }
 
   const handleLog = async () => {
-  const valid = rows.filter(r => r.foodName && r.grams)
-  if (valid.length === 0) return
+    const valid = rows.filter(r => r.foodName && r.grams)
+    if (valid.length === 0) return
 
-  setLogging(true)
+    setLogging(true)
     try {
-      // Step 1: build query string and hit /search to get name + calories
-      const query = valid
-        .map(r => `${r.foodName} ${r.grams}g`)
-        .join(', ')
+      const resolvedItems = []
 
-      const searchRes = await api.get(`/meals/search?q=${encodeURIComponent(query)}`)
-      const { results, totalCalories } = searchRes.data
+      for (const row of valid) {
+        if (row.foodData && row.foodData.calories_per_100g) {
+          // User selected a specific suggestion — use its stored nutrition directly
+          // instead of re-searching, which would lose the specific variant
+          const calories = Math.round((row.foodData.calories_per_100g * parseFloat(row.grams)) / 100)
+          resolvedItems.push({ name: row.foodData.name, calories })
+        } else {
+          // User typed manually without selecting — fall back to search API
+          const searchRes = await api.get(
+            `/meals/search?q=${encodeURIComponent(`${row.foodName} ${row.grams}g`)}`
+          )
+          const { results } = searchRes.data
+          results.forEach(r => resolvedItems.push({ name: r.name, calories: r.calories }))
+        }
+      }
 
-      // Step 2: send resolved name + calories to /log as the backend expects
-      const name = results.map(r => r.name).join(', ')
+      const name = resolvedItems.map(r => r.name).join(', ')
+      const totalCalories = resolvedItems.reduce((sum, r) => sum + r.calories, 0)
+
       await api.post('/meals/log', { name, calories: totalCalories, mealType })
 
       onMealLogged?.()
