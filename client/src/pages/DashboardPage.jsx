@@ -205,14 +205,6 @@ function DashboardPage() {
         {/* Calorie Tracker */}
         <CalorieTracker mealData={mealData} onUpdate={refreshAll} />
 
-        {/* Meal Logger */}
-        <div className={styles.section}>
-          <MealLogger onMealLogged={() => {
-            fetchTodayMeals()
-            fetchBlazeStatus()
-          }} />
-        </div>
-
         {/* Water Tracker */}
         <WaterTracker
           initialGlasses={blazeStatus?.today?.waterGlasses || 0}

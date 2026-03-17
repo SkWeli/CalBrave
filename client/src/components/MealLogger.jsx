@@ -34,6 +34,7 @@ function FoodRow({ row, index, onUpdate, onRemove }) {
 
   return (
     <div className={styles.row}>
+      
       {/* Food search input */}
       <div className={styles.searchWrapper}>
         <input
@@ -79,8 +80,9 @@ function FoodRow({ row, index, onUpdate, onRemove }) {
 
 // Main logger
 function MealLogger({ onMealLogged }) {
-  const [rows, setRows] = useState([{ foodName: '', grams: '', foodData: null }])
+  const [rows, setRows]       = useState([{ foodName: '', grams: '', foodData: null }])
   const [logging, setLogging] = useState(false)
+  const [mealType, setMealType] = useState('lunch')
 
   const addRow = () =>
     setRows([...rows, { foodName: '', grams: '', foodData: null }])
@@ -105,7 +107,7 @@ function MealLogger({ onMealLogged }) {
         .map(r => `${r.foodName} ${r.grams}g`)
         .join(', ')
 
-      await api.post('/meals/log', { query })
+      await api.post('/meals/log', { query, mealType })
       onMealLogged?.()
       setRows([{ foodName: '', grams: '', foodData: null }])
     } catch (err) {
@@ -117,6 +119,14 @@ function MealLogger({ onMealLogged }) {
 
   return (
     <div className={styles.container}>
+
+      <select value={mealType} onChange={e => setMealType(e.target.value)} className={styles.select}>
+        <option value="breakfast">Breakfast</option>
+        <option value="lunch">Lunch</option>
+        <option value="dinner">Dinner</option>
+        <option value="snack">Snack</option>
+      </select>
+
       <h3 className={styles.title}>🍽️ Log Meal</h3>
 
       {rows.map((row, i) => (
