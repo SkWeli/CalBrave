@@ -71,30 +71,18 @@ function parseIngredient(text) {
 async function lookupCustomFood(foodName) {
   const key = foodName.toLowerCase().trim()
 
-  // Try exact document ID match first
+  // Try exact document ID match first (1 read)
   const exactSnap = await db.collection('foods').doc(key).get()
   if (exactSnap.exists) return exactSnap.data()
 
-  // Fetch all foods and do keyword search
-  const allSnap = await db.collection('foods').get()
-  const searchWords = key.split(' ').filter(w => w.length > 2)
+  // Range query instead of fetching entire collection
+  const snap = await db.collection('foods')
+    .where('name', '>=', key)
+    .where('name', '<=', key + '\uf8ff')
+    .limit(3)
+    .get()
 
-  let bestMatch = null
-  let bestScore = 0
-
-  allSnap.forEach(doc => {
-    const data = doc.data()
-    const nameLower = data.name.toLowerCase()
-    const score = searchWords.filter(word => nameLower.includes(word)).length
-
-    if (score > bestScore) {
-      bestScore = score
-      bestMatch = data
-    }
-  })
-
-  if (bestScore > 0) return bestMatch
-
+  if (!snap.empty) return snap.docs[0].data()
   return null
 }
 
