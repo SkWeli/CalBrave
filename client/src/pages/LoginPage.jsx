@@ -38,11 +38,11 @@ function LoginPage() {
           <p className={styles.logoText}>CalBrave<span>🔥</span></p>
 
           <h1 className={styles.heroTitle}>
-            Your personal health&nbsp;journey,&nbsp;tracked.
+            Your personal health journey tracker
           </h1>
 
           <p className={styles.heroSub}>
-            Weight, meals, water, streaks, and Blaze Points — all in one place.
+            {/*Weight, meals, water, streaks, and Blaze Points - all in one place.*/}
           </p>
 
           <ul className={styles.featureList}>
@@ -92,9 +92,7 @@ function LoginPage() {
             Create a Free Account
           </button>
 
-          <p className={styles.registerNote}>
-            Click above — registration happens on the Asgardeo page.
-          </p>
+          
 
           {error && (
             <p className={styles.error}>
