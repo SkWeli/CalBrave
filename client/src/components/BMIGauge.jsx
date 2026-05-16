@@ -1,54 +1,137 @@
 // src/components/BMIGauge.jsx
 import styles from './BMIGauge.module.css'
 
-function BMIGauge({ bmi }) {
-  // BMI scale: 10 → 40 mapped to 0° → 180°
-  const clampedBMI = Math.min(Math.max(bmi, 10), 40)
-  const angle = ((clampedBMI - 10) / 30) * 180 - 90  // -90° to +90°
+const MIN_BMI = 10
+const MAX_BMI = 40
+const CX = 130
+const CY = 116
+const R = 86
+const NEEDLE_LENGTH = 68
 
-  const getStatus = () => {
-    if (bmi < 18.5) return { label: 'Underweight', color: '#60a5fa' }
-    if (bmi < 25)   return { label: 'Healthy',     color: '#22c55e' }
-    if (bmi < 30)   return { label: 'Overweight',  color: '#f97316' }
-    return              { label: 'Obese',          color: '#ef4444' }
+const ZONES = [
+  { label: 'Underweight', shortLabel: 'Under', min: 10, max: 18.5, colorVar: '--bmi-under' },
+  { label: 'Healthy', shortLabel: 'Healthy', min: 18.5, max: 25, colorVar: '--bmi-healthy' },
+  { label: 'Overweight', shortLabel: 'Over', min: 25, max: 30, colorVar: '--bmi-over' },
+  { label: 'Obese', shortLabel: 'Obese', min: 30, max: 40, colorVar: '--bmi-obese' },
+]
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(Number(value) || 0, min), max)
+}
+
+function bmiToAngle(value) {
+  // 10 BMI = 180° left edge, 40 BMI = 0° right edge
+  const progress = (clamp(value, MIN_BMI, MAX_BMI) - MIN_BMI) / (MAX_BMI - MIN_BMI)
+  return 180 - progress * 180
+}
+
+function polarToCartesian(angle, radius = R) {
+  const radians = (angle * Math.PI) / 180
+
+  return {
+    x: CX + radius * Math.cos(radians),
+    y: CY - radius * Math.sin(radians),
   }
+}
 
-  const status = getStatus()
+function describeArc(startBMI, endBMI, radius = R) {
+  const startAngle = bmiToAngle(startBMI)
+  const endAngle = bmiToAngle(endBMI)
+  const start = polarToCartesian(startAngle, radius)
+  const end = polarToCartesian(endAngle, radius)
+  const largeArcFlag = Math.abs(startAngle - endAngle) > 180 ? 1 : 0
+
+  return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`
+}
+
+function getStatus(bmi) {
+  if (bmi < 18.5) return ZONES[0]
+  if (bmi < 25) return ZONES[1]
+  if (bmi < 30) return ZONES[2]
+  return ZONES[3]
+}
+
+function BMIGauge({ bmi = 0 }) {
+  const safeBMI = Number(bmi) || 0
+  const clampedBMI = clamp(safeBMI, MIN_BMI, MAX_BMI)
+  const status = getStatus(safeBMI)
+  const needleAngle = bmiToAngle(clampedBMI)
+  const needleTip = polarToCartesian(needleAngle, NEEDLE_LENGTH)
+  const hasProgress = clampedBMI > MIN_BMI
 
   return (
-    <div className={styles.container}>
-      <svg viewBox="0 0 200 110" className={styles.svg}>
-        {/* Background arc segments */}
-        <path d="M 20 100 A 80 80 0 0 1 65 27" fill="none" stroke="#60a5fa" strokeWidth="12" strokeLinecap="round"/>
-        <path d="M 65 27 A 80 80 0 0 1 135 27" fill="none" stroke="#22c55e" strokeWidth="12" strokeLinecap="round"/>
-        <path d="M 135 27 A 80 80 0 0 1 170 58" fill="none" stroke="#f97316" strokeWidth="12" strokeLinecap="round"/>
-        <path d="M 170 58 A 80 80 0 0 1 180 100" fill="none" stroke="#ef4444" strokeWidth="12" strokeLinecap="round"/>
+    <div className={styles.container} aria-label={`BMI ${safeBMI}, ${status.label}`}>
+      <svg viewBox="0 0 260 160" className={styles.svg} role="img">
+        <defs>
+          <filter id="bmi-active-glow" x="-35%" y="-35%" width="170%" height="170%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Wider background track creates a clean inset/border around the zone arcs. */}
+        <path
+          d={describeArc(MIN_BMI, MAX_BMI)}
+          className={styles.track}
+          pathLength="100"
+        />
+
+        {/* BMI zone arcs sit centered on the wider track. */}
+        {ZONES.map((zone) => (
+          <path
+            key={zone.label}
+            d={describeArc(zone.min, zone.max)}
+            className={styles.zone}
+            style={{ stroke: `var(${zone.colorVar})` }}
+            pathLength="100"
+          />
+        ))}
+
+        {/* Subtle active progress glow from the minimum BMI to the current BMI. */}
+        {hasProgress && (
+          <path
+            d={describeArc(MIN_BMI, clampedBMI)}
+            className={styles.activeGlow}
+            style={{ stroke: `var(${status.colorVar})` }}
+            pathLength="100"
+          />
+        )}
 
         {/* Needle */}
         <line
-          x1="100" y1="100"
-          x2={100 + 60 * Math.cos(((angle - 90) * Math.PI) / 180)}
-          y2={100 + 60 * Math.sin(((angle - 90) * Math.PI) / 180)}
-          stroke="white"
-          strokeWidth="3"
-          strokeLinecap="round"
+          x1={CX}
+          y1={CY}
+          x2={needleTip.x}
+          y2={needleTip.y}
+          className={styles.needle}
         />
-        {/* Center dot */}
-        <circle cx="100" cy="100" r="6" fill="white" />
 
-        {/* Labels */}
-        <text x="10"  y="108" fill="#60a5fa" fontSize="8">Under</text>
-        <text x="78"  y="18"  fill="#22c55e" fontSize="8">Healthy</text>
-        <text x="142" y="52"  fill="#f97316" fontSize="8">Over</text>
-        <text x="168" y="95"  fill="#ef4444" fontSize="8">Obese</text>
+        {/* Clean pivot base: outer ring, dot, and inner cutout. */}
+        <circle cx={CX} cy={CY} r="10" className={styles.pivotOuter} />
+        <circle cx={CX} cy={CY} r="6.5" className={styles.pivotMiddle} />
+        <circle cx={CX} cy={CY} r="2.5" className={styles.pivotInner} />
       </svg>
 
-      <p className={styles.bmiValue} style={{ color: status.color }}>
-        BMI: {bmi}
-      </p>
-      <p className={styles.status} style={{ color: status.color }}>
-        {status.label}
-      </p>
+      <div className={styles.readout} style={{ color: `var(${status.colorVar})` }}>
+        <div className={styles.bmiValue}>BMI: {safeBMI.toFixed(1)}</div>
+        <div className={styles.status}>{status.label}</div>
+      </div>
+
+      <div className={styles.legend} aria-label="BMI categories">
+        {ZONES.map((zone) => (
+          <div key={zone.label} className={styles.legendItem}>
+            <span
+              className={styles.swatch}
+              style={{ backgroundColor: `var(${zone.colorVar})` }}
+              aria-hidden="true"
+            />
+            <span>{zone.shortLabel}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

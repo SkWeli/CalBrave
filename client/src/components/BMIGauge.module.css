@@ -1,25 +1,108 @@
 /* BMIGauge.module.css */
 .container {
+  --bmi-under: #60a5fa;
+  --bmi-healthy: #22c55e;
+  --bmi-over: #f97316;
+  --bmi-obese: #ef4444;
+
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px;
+  padding: 16px 12px 14px;
 }
 
 .svg {
-  width: 200px;
-  height: 110px;
+  width: min(260px, 100%);
+  height: auto;
+  overflow: visible;
+}
+
+.track {
+  fill: none;
+  stroke: var(--surface-2, rgba(255, 255, 255, 0.12));
+  stroke-width: 20;
+  stroke-linecap: round;
+}
+
+.zone {
+  fill: none;
+  stroke-width: 15;
+  stroke-linecap: round;
+}
+
+.activeGlow {
+  fill: none;
+  stroke-width: 15;
+  stroke-linecap: round;
+  opacity: 0.45;
+  filter: url(#bmi-active-glow);
+}
+
+.needle {
+  stroke: var(--text-primary, #f8fafc);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+.pivotOuter {
+  fill: var(--surface-2, #1f2937);
+  stroke: var(--bg, #0f1117);
+  stroke-width: 1.5;
+}
+
+.pivotMiddle {
+  fill: var(--text-primary, #f8fafc);
+}
+
+.pivotInner {
+  fill: var(--bg, #0f1117);
+}
+
+.readout {
+  margin-top: -16px;
+  text-align: center;
 }
 
 .bmiValue {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 8px 0 4px;
+  font-size: 1.55rem;
+  line-height: 1.1;
+  font-weight: 800;
 }
 
 .status {
-  font-size: 0.9rem;
-  font-weight: 500;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  line-height: 1;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
+}
+
+.legend {
+  width: 100%;
+  max-width: 330px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 14px;
+  margin-top: 18px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.68));
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.swatch {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px var(--surface-2, rgba(255, 255, 255, 0.1));
 }

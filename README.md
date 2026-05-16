@@ -2,55 +2,76 @@
 
 > **Be brave. Track everything. Win.**
 
-CalBrave is a full-stack gamified health and weight loss tracker that turns your daily health habits into an RPG-style adventure. Log meals, track your weight, build streaks, earn VitaPoints (VP), level up, and unlock achievements on your journey to your goal body.
+CalBrave is a full-stack gamified health and weight-tracking web application that turns daily health habits into a simple RPG-style experience. Users can securely sign in with **WSO2 Asgardeo**, complete onboarding, log weight, track meals, monitor water intake, complete daily quests, earn BlazePoints, level up, and view progress from a personalized dashboard.
 
 ---
 
 ## 🌟 Features
 
-### 🎮 Gamification
-- **VitaPoints (VP)** — Earn points for every healthy action
-- **Level & Rank System** — Progress from "Beginner" to "CalBrave Legend"
-- **Daily Quests** — Fresh challenges every day (walk, hydrate, hit calorie target)
-- **Achievements & Badges** — One-time milestone rewards
-- **Streak Tracker** — Consecutive day logging streaks with bonuses
-- **Weekly Boss Battle** — Hit your weekly weight target to defeat the boss
+### 🔐 Secure Authentication with WSO2 Asgardeo
 
-### 🍽️ Meal & Calorie Tracking
-- Log Breakfast, Lunch, Dinner, and Snacks
-- Per-meal calorie, protein, carbs, and fat breakdown
-- Daily calorie target auto-calculated from your profile
-- End-of-day calorie deficit score with VP reward/penalty
-- Searchable food database with common foods
-
-### ⚖️ Weight & Body Tracking
-- Daily morning weight logging
-- Waist measurement tracking (especially for overweight users)
-- 30-day weight trend chart
-- Progress: total lost, % of goal, average loss per week
-
-### 💧 Habit Tracking
-- Daily walk / exercise logging
-- Water intake tracker (glass by glass)
-- Sleep hours logger
-- All habits tied to VP rewards
-
-### 📊 Dashboard
-- Calorie ring (eaten vs. target)
-- Weight trend line chart
-- Water intake progress
-- Active quests with completion status
-- Recent achievements feed
-- Weekly boss progress bar
+- Login and registration handled through WSO2 Asgardeo
+- Secure OAuth 2.0 / OpenID Connect authentication flow
+- JWT access tokens used to protect Express API routes
+- New users are redirected to setup after first sign-in
+- Existing users with completed profiles go directly to the dashboard
+- Protected routes prevent unauthenticated access
+- Logout redirects users safely back to the login page
 
 ### 👤 Smart Onboarding
-- BMI auto-calculation
-- Daily calorie target via Mifflin-St Jeor formula
-- Starting class assigned by BMI category:
-  - BMI < 18.5 → 🌱 Seedling
-  - BMI 18.5–24.9 → ⚔️ Guardian
-  - BMI 25–29.9 → 🔥 Challenger
-  - BMI 30+ → 🛡️ Titan
+
+- User profile setup after first sign-in
+- Name, height, goal weight, and optional date of birth collection
+- BMI calculation support
+- Firestore profile stored under the authenticated Asgardeo user ID
+
+### 🎮 Gamification
+
+- **BlazePoints (BP)** for healthy actions
+- Level and rank progression
+- Daily quests
+- Streak tracking
+- Badges and milestone rewards
+- Bonus points for completing all daily quests
+
+### ⚖️ Weight Tracking
+
+- Log daily weight
+- View latest weight
+- View weight history
+- Weight trend chart
+- One entry per date per user
+- BlazePoints awarded for daily weight logging
+
+### 🍽️ Meal & Calorie Tracking
+
+- Search foods and nutrition data
+- Sri Lankan custom food lookup support
+- USDA food database fallback
+- Log meals by type: breakfast, lunch, dinner, or snack
+- Track daily total calories
+- Compare calories against a daily target
+
+### 💧 Water Tracking
+
+- Log water glasses
+- Track progress toward 8 glasses per day
+- Earn BlazePoints for each glass
+- Bonus reward when daily water goal is completed
+
+### 📊 Dashboard
+
+- Personalized greeting
+- Current weight
+- Goal weight
+- Remaining weight to goal
+- BMI overview
+- BlazePoints and level card
+- Daily quests
+- Calorie tracker
+- Water tracker
+- Weight chart
+- Weight history
 
 ---
 
@@ -58,76 +79,129 @@ CalBrave is a full-stack gamified health and weight loss tracker that turns your
 
 | Layer | Technology |
 |---|---|
-| Frontend | React.js (Vite) + Tailwind CSS |
+| Frontend | React.js + Vite |
 | Backend | Node.js + Express.js |
+| Authentication | WSO2 Asgardeo |
+| Auth Protocols | OAuth 2.0 + OpenID Connect |
+| Token Type | JWT Access Token |
 | Database | Firebase Firestore |
-| Auth | Firebase Authentication (Google + Email) |
+| Backend Auth Verification | Asgardeo JWKS + `jose` |
 | Charts | Recharts |
-| Hosting | Firebase Hosting |
-| Storage | Firebase Storage (meal photos) |
-| Notifications | Firebase Cloud Messaging (FCM) |
+| Styling | CSS Modules |
+
+---
+
+## 🔐 Authentication Flow
+
+CalBrave uses WSO2 Asgardeo for authentication.
+
+### New User Flow
+
+```txt
+/login
+↓
+Click "Create New Account"
+↓
+Redirect to Asgardeo
+↓
+Register / sign in
+↓
+Redirect to /auth/callback
+↓
+App checks /api/users/profile
+↓
+No profile found
+↓
+Redirect to /setup
+↓
+Save profile
+↓
+Redirect to /dashboard
+```
+
+### Existing User Flow
+
+```txt
+/login
+↓
+Click "Continue to Secure Login"
+↓
+Redirect to Asgardeo
+↓
+Sign in
+↓
+Redirect to /auth/callback
+↓
+App checks /api/users/profile
+↓
+Profile exists
+↓
+Redirect to /dashboard
+```
+
+### Logout Flow
+
+```txt
+/dashboard or /setup
+↓
+Click Sign out
+↓
+Asgardeo session ends
+↓
+Redirect to /login
+```
 
 ---
 
 ## 📁 Project Structure
 
-```
+```txt
 calbrave/
-├── client/                      # React frontend (Vite)
+├── client/
 │   ├── public/
 │   ├── src/
-│   │   ├── components/          # Shared UI components
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── Sidebar.jsx
-│   │   │   ├── VPPopup.jsx
-│   │   │   ├── LevelUpModal.jsx
-│   │   │   └── AchievementToast.jsx
+│   │   ├── components/
+│   │   │   ├── BMIGauge.jsx
+│   │   │   ├── BlazeStatsCard.jsx
+│   │   │   ├── CalorieTracker.jsx
+│   │   │   ├── DailyQuests.jsx
+│   │   │   ├── LoadingScreen.jsx
+│   │   │   ├── ProtectedRoute.jsx
+│   │   │   ├── WaterTracker.jsx
+│   │   │   └── WeightChart.jsx
 │   │   ├── context/
 │   │   │   ├── AuthContext.jsx
-│   │   │   └── UserContext.jsx
-│   │   ├── hooks/
-│   │   │   ├── useWeightLog.js
-│   │   │   ├── useMealLog.js
-│   │   │   ├── useHabits.js
-│   │   │   └── useAchievements.js
+│   │   │   └── useAuth.js
 │   │   ├── pages/
-│   │   │   ├── LoginPage.jsx
-│   │   │   ├── OnboardPage.jsx
+│   │   │   ├── AuthCallbackPage.jsx
 │   │   │   ├── DashboardPage.jsx
-│   │   │   ├── MealLogPage.jsx
-│   │   │   ├── HabitsPage.jsx
-│   │   │   ├── ProgressPage.jsx
-│   │   │   └── ProfilePage.jsx
-│   │   ├── firebase.js          # Firebase client config
+│   │   │   ├── LoginPage.jsx
+│   │   │   └── SetupPage.jsx
+│   │   ├── services/
+│   │   │   ├── api.js
+│   │   │   ├── userService.js
+│   │   │   └── weightService.js
 │   │   ├── App.jsx
+│   │   ├── firebase.js
+│   │   ├── index.css
 │   │   └── main.jsx
 │   ├── .env
 │   ├── index.html
-│   ├── tailwind.config.js
 │   └── package.json
 │
-├── server/                      # Node.js + Express backend
-│   ├── routes/
-│   │   ├── users.js
-│   │   ├── weightLogs.js
-│   │   ├── mealLogs.js
-│   │   ├── habitLogs.js
-│   │   ├── achievements.js
-│   │   └── quests.js
+├── server/
 │   ├── middleware/
 │   │   └── verifyToken.js
-│   ├── utils/
-│   │   ├── vitapoints.js        # VP & level engine
-│   │   ├── achievements.js      # Achievement engine
-│   │   ├── calorieCalc.js       # BMR/TDEE calculator
-│   │   └── questEngine.js       # Daily quest generator
-│   ├── firebase-admin.js        # Firebase Admin SDK init
-│   ├── index.js                 # Express entry point
+│   ├── routes/
+│   │   ├── gamificationRoutes.js
+│   │   ├── mealRoutes.js
+│   │   ├── userRoutes.js
+│   │   └── weightRoutes.js
+│   ├── firebase-admin.js
+│   ├── index.js
 │   ├── .env
 │   └── package.json
 │
-├── firebase.json                # Firebase hosting config
-├── .firebaserc
 └── README.md
 ```
 
@@ -138,28 +212,84 @@ calbrave/
 ### Prerequisites
 
 ```bash
-node --version    # v18.0.0 or higher
-npm --version     # v9.0.0 or higher
+node --version
+npm --version
 ```
 
-### 1. Clone the Repository
+Recommended:
+
+```txt
+Node.js v18 or higher
+npm v9 or higher
+```
+
+---
+
+## 1. Clone the Repository
 
 ```bash
 git clone https://github.com/yourusername/calbrave.git
 cd calbrave
 ```
 
-### 2. Firebase Setup
+---
 
-1. Go to [console.firebase.google.com](https://console.firebase.google.com)
-2. Create a new project named `calbrave`
-3. Enable **Authentication** → Google + Email/Password
-4. Enable **Firestore Database** → Start in test mode
-5. Enable **Hosting**
-6. Go to **Project Settings → Service Accounts** → Generate new private key (save JSON)
-7. Go to **Project Settings → General** → Copy `firebaseConfig`
+## 2. Asgardeo Setup
 
-### 3. Backend Setup
+1. Go to the Asgardeo Console.
+2. Create an organization.
+3. Create a **Single Page Application**.
+4. Copy the **Client ID**.
+5. Configure the URLs below.
+
+### Authorized Redirect URLs
+
+```txt
+http://localhost:5173
+http://localhost:5173/login
+http://localhost:5173/auth/callback
+http://localhost:5173/setup
+http://localhost:5173/dashboard
+```
+
+### Allowed Origin
+
+```txt
+http://localhost:5173
+```
+
+### Required Asgardeo Settings
+
+```txt
+Grant Types:
+- Code
+- Refresh Token
+
+PKCE:
+- Mandatory
+
+Access Token Type:
+- JWT
+
+Self Registration:
+- Enabled
+```
+
+---
+
+## 3. Firebase Setup
+
+1. Go to the Firebase Console.
+2. Create a Firebase project.
+3. Enable Firestore Database.
+4. Generate a Firebase Admin service account key.
+5. Add the required Firebase Admin credentials to the backend `.env`.
+
+Firebase is used as the database. Authentication is handled by Asgardeo.
+
+---
+
+## 4. Backend Setup
 
 ```bash
 cd server
@@ -167,27 +297,46 @@ npm install
 ```
 
 Create `server/.env`:
+
 ```env
 PORT=5000
-FIREBASE_SERVICE_ACCOUNT=<paste your service account JSON as a single-line string>
+ASGARDEO_BASE_URL=https://api.asgardeo.io/t/YOUR_ORG_NAME
+USDA_API_KEY=your_usda_api_key
+
+FIREBASE_PROJECT_ID=your_firebase_project_id
+FIREBASE_CLIENT_EMAIL=your_firebase_client_email
+FIREBASE_PRIVATE_KEY=your_firebase_private_key
 ```
 
-Start the server:
+Start the backend:
+
 ```bash
 npm run dev
 ```
 
-### 4. Frontend Setup
+Expected output:
+
+```txt
+Server running on http://localhost:5000
+```
+
+---
+
+## 5. Frontend Setup
 
 ```bash
-cd ../client
+cd client
 npm install
 ```
 
 Create `client/.env`:
+
 ```env
+VITE_ASGARDEO_CLIENT_ID=your_asgardeo_client_id
+VITE_ASGARDEO_BASE_URL=https://api.asgardeo.io/t/YOUR_ORG_NAME
 VITE_API_URL=http://localhost:5000
-VITE_FIREBASE_API_KEY=your_api_key
+
+VITE_FIREBASE_API_KEY=your_firebase_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=your_project_id
 VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
@@ -196,87 +345,234 @@ VITE_FIREBASE_APP_ID=your_app_id
 ```
 
 Start the frontend:
+
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+Open:
+
+```txt
+http://localhost:5173
+```
+
+---
+
+## 🧪 Testing Checklist
+
+### Existing User with Profile
+
+```txt
+/login
+↓
+Continue to Secure Login
+↓
+Asgardeo sign in
+↓
+/auth/callback
+↓
+/dashboard
+```
+
+Expected:
+
+```txt
+/api/users/profile = 200
+```
+
+---
+
+### Existing User without Profile
+
+```txt
+/login
+↓
+Continue to Secure Login
+↓
+Asgardeo sign in
+↓
+/auth/callback
+↓
+/setup
+```
+
+Expected:
+
+```txt
+/api/users/profile = 404
+```
+
+---
+
+### New User
+
+```txt
+/login
+↓
+Create New Account
+↓
+Asgardeo Register
+↓
+Sign in
+↓
+/auth/callback
+↓
+/setup
+↓
+Save profile
+↓
+/dashboard
+```
+
+---
+
+### Logout
+
+```txt
+/dashboard
+↓
+Sign out
+↓
+/login
+```
+
+---
+
+### Protected Routes
+
+When logged out:
+
+```txt
+/dashboard → /login
+/setup → /login
+```
+
+When logged in:
+
+```txt
+/dashboard loads successfully
+/setup loads for users who still need setup
+```
 
 ---
 
 ## 🗃️ Firestore Data Structure
 
-```
-users/{uid}
+```txt
+users/{asgardeoUserId}
   ├── weightLogs/{date}
   ├── mealLogs/{date}
   │     └── meals/{mealId}
-  ├── habitLogs/{date}
-  ├── achievements/{achievementId}
-  └── dailyQuests/{date}
+  ├── dailyLogs/{date}
+  └── badges/{badgeId}
+
+foods/{foodName}
 ```
+
+The Firestore user document ID is based on the Asgardeo user `sub` claim.
 
 ---
 
-## 🎖️ VitaPoints System
+## 🔐 Backend Token Verification
 
-| Action | VP |
-|---|---|
-| Log morning weight | +20 |
-| Log waist measurement | +25 |
-| Log each meal | +15 |
+The frontend sends the Asgardeo JWT access token to the Express backend:
+
+```txt
+Authorization: Bearer <access_token>
+```
+
+The backend verifies the token using Asgardeo JWKS:
+
+```txt
+https://api.asgardeo.io/t/YOUR_ORG_NAME/oauth2/jwks
+```
+
+After verification, the backend sets:
+
+```js
+req.user.uid = payload.sub;
+```
+
+This `uid` is used to read and write user-specific Firestore data.
+
+---
+
+## 🎖️ BlazePoints System
+
+| Action | BP |
+|---|---:|
+| Log weight | +20 |
+| Log meal | +15 |
 | Each glass of water | +5 |
-| 30+ min walk | +40 |
-| Exercise session | +40 |
-| Daily calorie deficit (200–800 kcal) | +80 |
+| Complete water goal | +30 |
 | Complete all daily quests | +100 |
+| First weight log milestone | +50 |
+| First meal log milestone | +50 |
 | 7-day streak bonus | +200 |
 
 ---
 
 ## 🏆 Level Progression
 
-| Level | VP Required | Rank |
-|---|---|---|
+| Level | BP Required | Rank |
+|---:|---:|---|
 | 1 | 0 | 🌱 Beginner |
 | 5 | 1,000 | 🚶 Active Starter |
 | 10 | 4,000 | 💧 Hydration Hero |
 | 15 | 9,000 | 🔥 Fat Burner |
 | 20 | 16,000 | 💪 Wellness Warrior |
 | 25 | 25,000 | ⭐ Health Champion |
-| 30 | 40,000 | 🏆 CalBrave Legend |
+| 30 | 40,000 | 🏆 BlazeElite |
+
+## 🧩 Common Issues
+
+### Redirect URI mismatch
+
+Make sure this URL is added to Asgardeo authorized redirect URLs:
+
+```txt
+http://localhost:5173/auth/callback
+```
 
 ---
 
-## 🗺️ Roadmap
+### CORS error from Asgardeo
 
-- [x] User onboarding with BMI calculation
-- [x] Weight & waist logging
-- [x] Meal logging with calorie tracking
-- [x] Habit tracker (walk, water, sleep)
-- [x] VitaPoints + level system
-- [x] Daily quests
-- [x] Achievements engine
-- [ ] Social leaderboards
-- [ ] AI meal photo scanner
-- [ ] Wearable sync (Google Fit / Apple Health)
-- [ ] Mobile app (React Native)
-- [ ] Premium tier with advanced analytics
+Make sure this is added as an allowed origin:
+
+```txt
+http://localhost:5173
+```
 
 ---
 
-## 🤝 Contributing
+### Backend returns 401
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Check:
+
+```txt
+1. Asgardeo access token type is JWT, not opaque.
+2. React is sending Authorization: Bearer <token>.
+3. Backend ASGARDEO_BASE_URL matches frontend organization.
+4. Express verifyToken.js is using Asgardeo JWKS.
+```
 
 ---
+
+### Logout OAuth error
+
+Add this to Asgardeo authorized redirect URLs:
+
+```txt
+http://localhost:5173/login
+```
 
 ## 📜 License
 
-[MIT](LICENSE)
+MIT License
 
 ---
 
 ## 👨‍💻 Author
 
-Built with 💪 by Senuda Weliwatta(https://github.com/SkWeli)
+Senuda Weliwatta

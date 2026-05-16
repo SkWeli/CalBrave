@@ -1,91 +1,117 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import userService from '../services/userService'
-import weightService from '../services/weightService'
-import styles from './SetupPage.module.css'
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import userService from '../services/userService';
+import weightService from '../services/weightService';
+import styles from './SetupPage.module.css';
 
 function calculateBMI(heightCm, currentWeight) {
-  const heightM = heightCm / 100
-  const bmi = currentWeight / (heightM * heightM)
+  const heightM = heightCm / 100;
+  const bmi = currentWeight / (heightM * heightM);
 
-  const minHealthy = 18.5 * (heightM * heightM)
-  const maxHealthy = 24.9 * (heightM * heightM)
+  const minHealthy = 18.5 * heightM * heightM;
+  const maxHealthy = 24.9 * heightM * heightM;
 
-  let targetWeight
-  let bmiStatus
+  let bmiStatus;
+  let targetWeight;
 
   if (bmi < 18.5) {
-    bmiStatus = 'underweight'
-    targetWeight = Math.round(minHealthy * 10) / 10
+    bmiStatus = 'underweight';
+    targetWeight = Math.round(minHealthy * 10) / 10;
   } else if (bmi > 24.9) {
-    bmiStatus = 'overweight'
-    targetWeight = Math.round(maxHealthy * 10) / 10
+    bmiStatus = 'overweight';
+    targetWeight = Math.round(maxHealthy * 10) / 10;
   } else {
-    bmiStatus = 'healthy'
-    targetWeight = Math.round(currentWeight * 10) / 10
+    bmiStatus = 'healthy';
+    targetWeight = Math.round(currentWeight * 10) / 10;
   }
 
-  return { bmi: Math.round(bmi * 10) / 10, bmiStatus, targetWeight }
+  return { bmi: Math.round(bmi * 10) / 10, bmiStatus, targetWeight };
 }
 
 function SetupPage() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const [name, setName]               = useState('')
-  const [height, setHeight]           = useState('')
-  const [weight, setWeight]           = useState('')
-  const [dateOfBirth, setDateOfBirth] = useState('')
-  const [gender, setGender]           = useState('')
-  const [saving, setSaving]           = useState(false)
-  const [error, setError]             = useState('')
+  const [name, setName]               = useState('');
+  const [height, setHeight]           = useState('');
+  const [weight, setWeight]           = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [gender, setGender]           = useState('');
+  const [saving, setSaving]           = useState(false);
+  const [error, setError]             = useState('');
+  const [checking, setChecking]       = useState(true);
+
+  // If this user already completed setup in a previous session, skip straight
+  // to the dashboard rather than showing the form again.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkExistingProfile() {
+      try {
+        await userService.getProfile();
+        // Profile exists — no need to show setup
+        if (!cancelled) navigate('/dashboard', { replace: true });
+      } catch (err) {
+        // 404 → no profile yet, show the form
+        if (!cancelled) setChecking(false);
+      }
+    }
+
+    checkExistingProfile();
+
+    return () => { cancelled = true; };
+  }, [navigate]);
 
   function getTodayDate() {
-    return new Date().toISOString().split('T')[0]
+    return new Date().toISOString().split('T')[0];
   }
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
 
-    // Explicit validation for fields HTML alone can't enforce
     if (!gender) {
-      setError('Please select a gender.')
-      return
+      setError('Please select a gender.');
+      return;
     }
 
-    setSaving(true)
+    setSaving(true);
+
     try {
       const { bmi, bmiStatus, targetWeight } = calculateBMI(
         parseFloat(height),
         parseFloat(weight)
-      )
+      );
 
       await Promise.all([
         userService.saveProfile({
           name,
-          height:      parseFloat(height),
+          height:     parseFloat(height),
           gender,
-          goalWeight:  targetWeight,
-          bmi,          // saved so DashboardPage can render BMIGauge
+          goalWeight: targetWeight,
+          bmi,
           bmiStatus,
           dateOfBirth,
         }),
-        weightService.logWeight(parseFloat(weight), getTodayDate())
-      ])
+        weightService.logWeight(parseFloat(weight), getTodayDate()),
+      ]);
 
-      navigate('/dashboard')
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save profile. Please try again.')
+      navigate('/dashboard', { replace: true });
+    } catch (error) {
+      setError(error.response?.data?.error || 'Failed to save profile. Please try again.');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
+  }
+
+  // Show nothing (or a spinner) while we confirm no existing profile exists
+  if (checking) {
+    return null;
   }
 
   return (
     <div className={styles.page}>
-
       <div className={styles.card}>
-
         <div className={styles.cardHeader}>
           <p className={styles.brand}>CalBrave</p>
           <h1 className={styles.title}>Set up your profile</h1>
@@ -97,7 +123,6 @@ function SetupPage() {
         {error && <p className={styles.error}>{error}</p>}
 
         <form onSubmit={handleSubmit} className={styles.form}>
-
           <div className={styles.field}>
             <label className={styles.label}>Full Name</label>
             <input
@@ -177,12 +202,10 @@ function SetupPage() {
           <button type="submit" disabled={saving} className={styles.submitBtn}>
             {saving ? 'Saving…' : 'Continue to Dashboard'}
           </button>
-
         </form>
-
       </div>
     </div>
-  )
+  );
 }
 
-export default SetupPage
+export default SetupPage;

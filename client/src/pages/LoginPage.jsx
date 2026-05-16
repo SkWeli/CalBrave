@@ -1,96 +1,110 @@
-import { useState } from 'react'
-import { useAuth } from '../context/useAuth'
-import { useNavigate, Navigate } from 'react-router-dom'
-import styles from './LoginPage.module.css' 
+import { Navigate } from "react-router-dom";
+import useAuth from "../context/useAuth";
+import styles from "./LoginPage.module.css";
 
 function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [isSignup, setIsSignup] = useState(false)
+  const { isAuthenticated, loading, error, login } = useAuth();
 
-  const { login, signup, user } = useAuth()
-  const navigate = useNavigate()
-
-  // If already logged in, redirect to dashboard
-    if (user) {
-    return <Navigate to="/dashboard" replace />
-    }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-
+  const handleLogin = async () => {
     try {
-      if (isSignup) {
-        await signup(email, password)
-        navigate('/setup')        // ← new users go to setup first
-      } else {
-        await login(email, password)
-        navigate('/dashboard')    // ← existing users go to dashboard
-      }
+      await login();
     } catch (err) {
-      setError(getErrorMessage(err.code))
-    } finally {
-      setLoading(false)
+      console.error("Login error:", err);
     }
+  };
+
+  // Asgardeo is still initialising — show spinner
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.loadingCard}>
+          <div className={styles.spinner}></div>
+          <p>Loading CalBrave…</p>
+        </div>
+      </div>
+    );
   }
 
-  const getErrorMessage = (code) => {
-    switch (code) {
-      case 'auth/user-not-found':    return 'No account found with this email'
-      case 'auth/wrong-password':    return 'Incorrect password'
-      case 'auth/email-already-in-use': return 'Email already registered'
-      case 'auth/weak-password':     return 'Password must be at least 6 characters'
-      case 'auth/invalid-email':     return 'Please enter a valid email'
-      default:                       return 'Something went wrong. Try again.'
-    }
+  // Already signed in — hand off to callback logic
+  if (isAuthenticated) {
+    return <Navigate to="/auth/callback" replace />;
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>🔥 CalBrave</h1>
-        <h2 className={styles.subtitle}>{isSignup ? 'Create Account' : 'Welcome Back'}</h2>
+    <div className={styles.page}>
+      {/* ── Left hero panel ──────────────────────────────── */}
+      <section className={styles.leftPanel}>
+        <div className={styles.brandBlock}>
+          <p className={styles.logoText}>CalBrave<span>🔥</span></p>
 
-        {error && <p className={styles.error}>{error}</p>}
+          <h1 className={styles.heroTitle}>
+            Your personal health&nbsp;journey,&nbsp;tracked.
+          </h1>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={styles.input}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={styles.input}
-            required
-          />
-          <button type="submit" disabled={loading} className={styles.button}>
-            {loading ? 'Please wait...' : isSignup ? 'Sign Up' : 'Login'}
-          </button>
-        </form>
+          <p className={styles.heroSub}>
+            Weight, meals, water, streaks, and Blaze Points — all in one place.
+          </p>
 
-        <p className={styles.toggle}>
-          {isSignup ? 'Already have an account?' : "Don't have an account?"}
-          <span
-            onClick={() => setIsSignup(!isSignup)}
-            className={styles.link}
+          <ul className={styles.featureList}>
+            <li><span className={styles.featureIcon}>📊</span> Weight &amp; BMI tracking</li>
+            <li><span className={styles.featureIcon}>🍽️</span> Calorie &amp; meal logging</li>
+            <li><span className={styles.featureIcon}>💧</span> Daily water intake</li>
+            <li><span className={styles.featureIcon}>🏆</span> Gamified daily quests</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* ── Right auth card ───────────────────────────────── */}
+      <section className={styles.rightPanel}>
+        <div className={styles.card}>
+          <div className={styles.cardTop}>
+            <h2 className={styles.cardTitle}>Sign in to CalBrave</h2>
+            <p className={styles.cardSub}>
+              We use <strong>Asgardeo</strong> for secure, passwordless&nbsp;authentication.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLogin}
+            className={styles.primaryBtn}
           >
-            {isSignup ? ' Login' : ' Sign Up'}
-          </span>
-        </p>
-      </div>
+            <span className={styles.lockIcon}>🔒</span>
+            Continue to Secure Login
+          </button>
+
+          <p className={styles.helperText}>
+            You'll be redirected to the Asgardeo login page. Your credentials
+            are never stored by CalBrave.
+          </p>
+
+          <div className={styles.divider}>
+            <span />
+            <span className={styles.dividerLabel}>New to CalBrave?</span>
+            <span />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLogin}
+            className={styles.secondaryBtn}
+          >
+            Create a Free Account
+          </button>
+
+          <p className={styles.registerNote}>
+            Click above — registration happens on the Asgardeo page.
+          </p>
+
+          {error && (
+            <p className={styles.error}>
+              {error.message || "Something went wrong. Please try again."}
+            </p>
+          )}
+        </div>
+      </section>
     </div>
-  )
+  );
 }
 
-export default LoginPage
+export default LoginPage;

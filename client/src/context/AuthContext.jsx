@@ -1,32 +1,39 @@
-import { createContext, useState, useEffect } from 'react'
-import { auth } from '../firebase.js'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged} from 'firebase/auth'
+import { createContext, useEffect } from "react";
+import { useAsgardeo } from "@asgardeo/react";
+import { setAccessTokenGetter } from "../services/api";
 
-export const AuthContext = createContext()
+export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const {
+    isSignedIn,
+    user,
+    signIn,
+    signOut,
+    loading,
+    error,
+    getAccessToken
+  } = useAsgardeo();
 
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-
+  // Register the token getter with the Axios instance so every API request
+  // automatically receives the Asgardeo JWT in the Authorization header.
   useEffect(() => {
-    // Listen for login/logout — fires on every auth state change including page refresh
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser)
-      setLoading(false)
-    })
-    return unsubscribe // stop listener on unmount
-  }, [])
+    setAccessTokenGetter(getAccessToken);
+  }, [getAccessToken]);
 
-  const login  = (email, password) => signInWithEmailAndPassword(auth, email, password)
-  const signup = (email, password) => createUserWithEmailAndPassword(auth, email, password)
-  const logout = ()                => signOut(auth)
-
-  const value = { user, login, signup, logout }
+  const value = {
+    isAuthenticated: isSignedIn,
+    user,
+    login:          signIn,
+    logout:         signOut,
+    loading,
+    error,
+    getAccessToken
+  };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children} {/* hide app until Firebase confirms auth state */}
+      {children}
     </AuthContext.Provider>
-  )
+  );
 }

@@ -1,89 +1,347 @@
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* ────────────────────────────────────────────────
+   LoginPage.module.css
+   Fonts: Syne (logo/hero), DM Sans (body)
+   Palette: orange accent #ff6b35, dark #0d0d0d
+──────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap');
+
+/* ── Layout ─────────────────────────────────────── */
+
+.page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: #111827;
+  background: #f5f4f0;
 }
 
-.card {
-  background-color: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  width: 100%;
-  max-width: 400px;
+/* ── Left panel ─────────────────────────────────── */
+
+.leftPanel {
+  background:
+    radial-gradient(ellipse at 80% 0%, rgba(255, 107, 53, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 10% 90%, rgba(255, 107, 53, 0.10) 0%, transparent 50%),
+    linear-gradient(160deg, #0d0d0d 0%, #1a1614 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 56px;
+  position: relative;
+  overflow: hidden;
 }
 
-.title {
-  text-align: center;
+/* Decorative ring */
+.leftPanel::before {
+  content: '';
+  position: absolute;
+  right: -160px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 107, 53, 0.14);
+}
+
+.leftPanel::after {
+  content: '';
+  position: absolute;
+  right: -100px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 107, 53, 0.20);
+}
+
+.brandBlock {
+  width: min(480px, 100%);
+  position: relative;
+  z-index: 1;
+}
+
+.logoText {
+  font-family: 'Syne', sans-serif;
   font-size: 28px;
-  margin-bottom: 8px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #fff;
+  margin: 0 0 48px;
 }
 
-.subtitle {
-  text-align: center;
-  color: #666;
-  margin-bottom: 24px;
-  font-weight: normal;
+.logoText span {
+  font-size: 20px;
+  margin-left: 3px;
 }
 
-.error {
-  background-color: #fee;
-  color: #c00;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-  font-size: 14px;
+.heroTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(30px, 3.2vw, 44px);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -1.2px;
+  color: #ffffff;
+  margin: 0 0 20px;
 }
 
-.form {
+.heroSub {
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 40px;
+  max-width: 380px;
+}
+
+.featureList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
+  gap: 14px;
+}
+
+.featureList li {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.72);
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
-.input {
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 16px;
-  outline: none;
+.featureIcon {
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
-.input:focus {
-  border-color: #ff6b35;    /* ← impossible with inline styles */
+/* ── Right panel ─────────────────────────────────── */
+
+.rightPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 48px;
 }
 
-.button {
-  padding: 12px;
-  background-color: #ff6b35;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  font-weight: bold;
+.card {
+  width: min(400px, 100%);
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 48px 44px;
+  box-shadow:
+    0 1px 0 rgba(0,0,0,0.04),
+    0 8px 32px rgba(17, 24, 39, 0.08),
+    0 40px 80px rgba(17, 24, 39, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.button:hover {
-  background-color: #e55a25;  /* ← impossible with inline styles */
+/* ── Card header ─────────────────────────────────── */
+
+.cardTop {
+  margin-bottom: 32px;
 }
 
-.button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;        /* ← impossible with inline styles */
+.cardTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  color: #0d0d0d;
+  margin: 0 0 10px;
 }
 
-.toggle {
-  text-align: center;
-  margin-top: 20px;
-  color: #666;
+.cardSub {
   font-size: 14px;
+  line-height: 1.6;
+  color: #6b7280;
+  margin: 0;
 }
 
-.link {
-  color: #ff6b35;
+.cardSub strong {
+  color: #374151;
+  font-weight: 600;
+}
+
+/* ── Primary button ──────────────────────────────── */
+
+.primaryBtn {
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff6b35 0%, #ef4d68 100%);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
   cursor: pointer;
-  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.30);
+}
+
+.primaryBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(255, 107, 53, 0.40);
+}
+
+.primaryBtn:active {
+  transform: translateY(0);
+  opacity: 0.9;
+}
+
+.lockIcon {
+  font-size: 15px;
+}
+
+/* ── Helper text ─────────────────────────────────── */
+
+.helperText {
+  font-size: 12.5px;
+  color: #9ca3af;
+  text-align: center;
+  margin: 14px 0 0;
+  line-height: 1.55;
+}
+
+/* ── Divider ─────────────────────────────────────── */
+
+.divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin: 30px 0 24px;
+}
+
+.divider span:not(.dividerLabel) {
+  height: 1px;
+  background: #e5e7eb;
+  display: block;
+}
+
+.dividerLabel {
+  font-size: 12px;
+  color: #9ca3af;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* ── Secondary button ────────────────────────────── */
+
+.secondaryBtn {
+  width: 100%;
+  height: 48px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  color: #374151;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.secondaryBtn:hover {
+  border-color: #ff6b35;
+  color: #ff6b35;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Register note ───────────────────────────────── */
+
+.registerNote {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+  margin: 12px 0 0;
+  line-height: 1.5;
+}
+
+/* ── Error ───────────────────────────────────────── */
+
+.error {
+  margin: 20px 0 0;
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* ── Loading state ───────────────────────────────── */
+
+.loadingCard {
+  grid-column: 1 / -1;
+  margin: auto;
+  text-align: center;
+  color: #374151;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #ff6b35;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ──────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+
+  .leftPanel {
+    padding: 48px 32px 32px;
+    text-align: center;
+  }
+
+  .leftPanel::before,
+  .leftPanel::after {
+    display: none;
+  }
+
+  .heroSub,
+  .featureList {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .featureList {
+    display: none; /* hide on small screens to save space */
+  }
+
+  .rightPanel {
+    padding: 32px 20px 56px;
+  }
+
+  .card {
+    padding: 36px 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    border-radius: 14px;
+  }
 }

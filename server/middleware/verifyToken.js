@@ -1,28 +1,48 @@
-import { admin } from '../firebase-admin.js'
+import { createRemoteJWKSet, jwtVerify } from "jose";
+
+const ASGARDEO_BASE_URL = process.env.ASGARDEO_BASE_URL;
+
+if (!ASGARDEO_BASE_URL) {
+  throw new Error("ASGARDEO_BASE_URL is missing in server .env");
+}
+
+// Fetches Asgardeo's public keys and caches them; rotates automatically.
+const JWKS = createRemoteJWKSet(
+  new URL(`${ASGARDEO_BASE_URL}/oauth2/jwks`)
+);
 
 const verifyToken = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization // Get the token from the request header
+    const authHeader = req.headers.authorization;
 
-    // Check if header exists and starts with 'Bearer '
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ 
-        error: 'No token provided. Please login first.' 
-      })
+    if (!authHeader?.startsWith("Bearer ")) {
+      return res.status(401).json({
+        error: "No token provided. Please log in first."
+      });
     }
 
-    const token = authHeader.split(' ')[1] // Extract just the token part (remove 'Bearer ' prefix)
-    const decodedToken = await admin.auth().verifyIdToken(token) //Verify the token with Firebase Admin
+    const token = authHeader.split(" ")[1];
 
-    req.user = decodedToken // Attach user info to request object
+    const { payload } = await jwtVerify(token, JWKS, {
+      issuer: `${ASGARDEO_BASE_URL}/oauth2/token`
+    });
 
-    next() // Move to the next function (the actual route handler)
+    // Expose consistent aliases so route handlers always use req.user.uid
+    req.user = {
+      ...payload,
+      uid:      payload.sub,   // primary identifier used as Firestore doc ID
+      id:       payload.sub,
+      email:    payload.email    ?? null,
+      username: payload.username ?? null
+    };
 
+    next();
   } catch (error) {
-    return res.status(401).json({ 
-      error: 'Invalid or expired token. Please login again.' 
-    })
+    console.error("Token verification failed:", error.message);
+    return res.status(401).json({
+      error: "Invalid or expired token. Please log in again."
+    });
   }
-}
+};
 
-export default verifyToken
+export default verifyToken;
